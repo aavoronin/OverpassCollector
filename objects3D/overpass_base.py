@@ -354,7 +354,7 @@ class overpass_base:
             hash2 = self.create_hash(p_list[::-1])
             if hash1 in hashes or hash2 in hashes:
                 continue
-            #if self.start_less_end(p_list[0], p_list[-1]): ## todo expand method
+            #if self.start_less_end(p_list[0], p_list[-1]): ## t o d o expand method
             p1 = p_list[0]
             p2 = p_list[-1]
             if (p1['lat'] < p2['lat']) or (p1['lat'] == p2['lat'] and p1['lon'] < p2['lon']):

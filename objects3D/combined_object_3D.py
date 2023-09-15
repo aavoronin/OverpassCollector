@@ -19,5 +19,5 @@ class combined_object_3D(fig_3D_base):
         self.textureCoordinates.extend(obj_3D.textureCoordinates)
         self.surfaces.extend([[vertex_index + start_i for vertex_index in surface] for surface in obj_3D.surfaces])
         self.normals.extend(obj_3D.normals)
-        self.colors.extend(obj_3D.colors) # TODO what do we do with colors ?
+        self.colors.extend(obj_3D.colors) # T O D O what do we do with colors ?
         self.edges.extend([(edge[0] + start_i, edge[1] + start_i) for edge in obj_3D.edges])

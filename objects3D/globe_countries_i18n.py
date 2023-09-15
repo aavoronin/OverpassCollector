@@ -35,7 +35,7 @@ class globe_countries_i18n(video_3D_base):
 
     def init_scene(self):
 
-        zoom = 6
+        zoom = 5
         factor = 2
         #self.ball_3D = ball_3D(factor * (2 ** tiles_power), factor * (2 ** tiles_power), 3)
         #self.ball_3D.create_arrays()
@@ -300,8 +300,10 @@ class globe_countries_i18n(video_3D_base):
 
     def draw_tiles_info(self, im, ovp, zoom):
         self.countries_names = {}
-        font = ImageFont.truetype('fonts\\arial.ttf', 36)
-        font2 = ImageFont.truetype('fonts\\arial.ttf', 24)
+        font_size_1 = 36 if zoom >= 6 else 20
+        font_size_2 = (font_size_1 * 2) // 3
+        font = ImageFont.truetype('fonts\\arial.ttf', font_size_1)
+        font2 = ImageFont.truetype('fonts\\arial.ttf', font_size_2)
         draw = ImageDraw.Draw(im)
         n_tiles = len(ovp.tile_bboxes)
         for (xtile, ytile) in ovp.get_list_of_tiles():
