@@ -236,7 +236,8 @@ class globe_countries_i18n(video_3D_base):
     def read_texture(self, filename, flip_x=False, flip_y=False):
 
         img = Image.open(filename)
-        img_data = numpy.array(list(img.getdata()), numpy.int8)
+        #img_data = numpy.array(list(img.getdata()), numpy.int8)
+        img_data = numpy.asarray(img, dtype=numpy.int8)
         if flip_x and flip_y:
             img_data = img_data.reshape(img.size[0], img.size[1], 3)
             img_data = img_data[::-1, ::-1, :]
