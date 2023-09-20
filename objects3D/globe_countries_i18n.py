@@ -100,8 +100,63 @@ class globe_countries_i18n(video_3D_base):
         ot.draw_tiles_numbers(ovp.scan_zoom, im)
 
         im.save("globe.png")
+        #---------------------------------------------------------------------------------------------------------------
+        im = self.fromMercator(im)
+        im = Image.open("globe.png")
+        #---------------------------------------------------------------------------------------------------------------
         return im
 
+    def fromMercator(self, im: Image) -> Image:
+        w = im.width
+        h = im.height
+        h2 = h // 2
+        mercator = Image.open("globe.png")
+        # mercator = Image.new('RGBA', (im.width, im.height), (255, 255, 255, 255))
+        #mercator = Image.new('RGBA', (im.width, im.height), (0, 0, 0, 255))
+        dH = 1
+        # for y in range(h2, 100, -1):
+        for i in range(0, h2):
+            y = h2 - i
+            # cord = (0, h2+y, w, h2+y+1)  # лево, верх, право, низ
+            # pic_crop = im.crop(cord)
+            if y < h2 / 10:
+                dH = 4
+            elif y < h2 / 5:
+                dH = 3
+            elif y < h2 / 3:
+                dH = 3
+            else:
+                dH = 2
+
+            pic_crop = im.crop((0, h2 - y, w, h2 - y + dH))
+            rezY = self.evaluateLat(y, h2)
+            mercator.paste(pic_crop, (0, rezY))
+
+            pic_crop = im.crop((0, h2 + y, w, h2 + y + dH))
+            mercator.paste(pic_crop, (0, 2 * h2 - rezY))
+
+        draw = ImageDraw.Draw(mercator)
+        draw.line((0, h2, w, h2))
+
+        mercator.save("globe.png")
+        #mercator.show("globe.png")
+
+        return mercator
+    def evaluateLat(self, y, h2):
+        debug = False
+        self.pi_div_2 = math.pi / 2.0
+        # teta = pi_div_2*(h2 - y)/h2
+        #teta = (pi_div_2 - 5.0 / 90.0 * pi_div_2) * (h2 - y) / h2
+        self.teta = (self.pi_div_2 - 10.0 / 90.0 * self.pi_div_2) * (h2 - y) / h2
+        self.angle = self.teta / 2.0 + self.pi_div_2 / 2.0
+        self.angleTan = math.tan(self.angle)
+        self.lat = math.log(self.angleTan)
+        #rezY = int(h2 * lat / pi_div_2) * 502 // 1000
+        self.rezY = int(h2 * self.lat / self.pi_div_2) * 6451 // 10000
+        if debug:
+            print("y=", y, "rezY=", self.rezY, "h2=", h2, "teta=", self.teta, self.teta * 90 / self.pi_div_2, "angle=", self.angle, "angleTan=",
+                  self.angleTan)
+        return self.rezY
     def get_country_data(self, ovp):
         ci_list = []
         for ci in ovp.country_data:
