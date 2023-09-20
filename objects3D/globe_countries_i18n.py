@@ -100,7 +100,7 @@ class globe_countries_i18n(video_3D_base):
         ot.draw_tiles_numbers(ovp.scan_zoom, im)
 
         im.save("globe.png")
-        self.save_2x_globe(im)
+        #self.save_2x_globe(im)
         return im
 
     def save_2x_globe(self, im):
