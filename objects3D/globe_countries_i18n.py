@@ -100,7 +100,19 @@ class globe_countries_i18n(video_3D_base):
         ot.draw_tiles_numbers(ovp.scan_zoom, im)
 
         im.save("globe.png")
+        self.save_2x_globe(im)
         return im
+
+    def save_2x_globe(self, im):
+        # Convert the image to a NumPy array
+        original_array = np.array(im)
+
+        # Duplicate each pixel horizontally
+        duplicated_array = np.repeat(original_array, 2, axis=1)
+
+        # Create a new image from the duplicated array
+        duplicated_image = Image.fromarray(duplicated_array)
+        duplicated_image.save("globe_2x.png")
 
     def get_country_data(self, ovp):
         ci_list = []
