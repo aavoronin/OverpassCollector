@@ -64,7 +64,7 @@ class osm_tiles:
         self.tiles_grid = [[self.get_tile_image(z, x, y) for x in range(n_tiles)] for y in range(n_tiles)]
         self.total_width = self.tiles_grid[0][0].shape[0] * n_tiles
         self.total_height = self.tiles_grid[0][0].shape[1] * n_tiles
-        #self.total_height = (int)(self.tiles_grid[0][0].shape[1] * n_tiles / (85.0511 / 90.0))
+        # self.total_height = (int)(self.tiles_grid[0][0].shape[1] * n_tiles / (85.0511 / 90.0))
 
         #self.total_height_tiles = self.tiles_grid[0][0].shape[1] * n_tiles
         #self.total_height = (int)(self.tiles_grid[0][0].shape[1] * n_tiles / (85.0511 / 90.0))
