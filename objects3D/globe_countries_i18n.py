@@ -107,14 +107,17 @@ class globe_countries_i18n(video_3D_base):
         return im
 
     def fromMercator(self, im: Image) -> Image:
+        #draw = ImageDraw.Draw(im)
+        # img_data = numpy.array(list(im.getdata()), numpy.int8)
         w = im.width
         h = im.height
         h2 = h // 2
+        offset85 = int(h2 * (90.0 - 85.0511) / 90.0)
+        #print("offset85=", offset85)
         mercator = Image.open("globe.png")
-        # mercator = Image.new('RGBA', (im.width, im.height), (255, 255, 255, 255))
         #mercator = Image.new('RGBA', (im.width, im.height), (0, 0, 0, 255))
         dH = 1
-        # for y in range(h2, 100, -1):
+        # Применить формулу Меркатора
         for i in range(0, h2):
             y = h2 - i
             # cord = (0, h2+y, w, h2+y+1)  # лево, верх, право, низ
@@ -130,18 +133,22 @@ class globe_countries_i18n(video_3D_base):
 
             pic_crop = im.crop((0, h2 - y, w, h2 - y + dH))
             rezY = self.evaluateLat(y, h2)
-            mercator.paste(pic_crop, (0, rezY))
+            mercator.paste(pic_crop, (0, rezY + offset85))
 
             pic_crop = im.crop((0, h2 + y, w, h2 + y + dH))
-            mercator.paste(pic_crop, (0, 2 * h2 - rezY))
+            mercator.paste(pic_crop, (0, 2 * h2 - rezY - offset85))
 
-        draw = ImageDraw.Draw(mercator)
-        draw.line((0, h2, w, h2))
+        # зоны выше широты 85
+        northEtalon = pic_crop = im.crop((0, 0, w, 1))
+        for i in range(0, offset85):
+            mercator.paste(pic_crop, (0, i))
+        southEtalon = pic_crop = im.crop((0, h - 2, w, h - 1))
+        for i in range(0, offset85):
+            mercator.paste(pic_crop, (0, h - i))
 
+        # draw = ImageDraw.Draw(mercator)
+        # draw.line((0, h2, w, h2))
         mercator.save("globe.png")
-        #mercator.show("globe.png")
-
-        return mercator
     def evaluateLat(self, y, h2):
         debug = False
         self.pi_div_2 = math.pi / 2.0
@@ -152,7 +159,7 @@ class globe_countries_i18n(video_3D_base):
         self.angleTan = math.tan(self.angle)
         self.lat = math.log(self.angleTan)
         #rezY = int(h2 * lat / pi_div_2) * 502 // 1000
-        self.rezY = int(h2 * self.lat / self.pi_div_2) * 6451 // 10000
+        self.rezY = int(h2 * self.lat / self.pi_div_2) * 6096 // 10000
         if debug:
             print("y=", y, "rezY=", self.rezY, "h2=", h2, "teta=", self.teta, self.teta * 90 / self.pi_div_2, "angle=", self.angle, "angleTan=",
                   self.angleTan)
