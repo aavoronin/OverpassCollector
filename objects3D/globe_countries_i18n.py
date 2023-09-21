@@ -79,18 +79,19 @@ class globe_countries_i18n(video_3D_base):
         #im = ot.get_world_image_for_globe(zoom, ovp.tile_bboxes)
 
         ovp.load()
-        ovp.selected_countries = ["AD", "SM", "AL", "SK", "AT", "GB", "AU", "BR", "NO", "SE", "JP", "IT", "GR", "DZ", "KZ", "DK", "GL"] #, "RU", "FR"
+        ovp.selected_countries = ["BR", "AD", "SM", "AL", "SK", "AT", "GB", "AU", "NO", "SE", "JP", "IT", "GR", "DZ", "KZ", "DK", "GL"] #, "RU", "FR"
         #ovp.selected_countries = ["US", "RU", "IT", "CL", "ES", "GE", "PL", "CH", "CA", "GB", "DK", "CZ", "AL", "DE", "KZ", "UG", "GL", "FR"] #[, "US"]
         #ovp.selected_countries = ["KZ", "UG"]
         #ovp.selected_countries = []
+        ovp.get_countries_bounding_boxes()
         ovp.get_countries_outer_borders()
         #ovp.get_countries_water_polygons()
         ovp.force_reload_cache = []
         ovp.force_recalc_polygons = []
-
         #ovp.get_list_of_admin_level_2_borders(True)
+
         #ovp.load()
-        #ovp.get_list_of_countries()
+        ovp.get_list_of_countries()
         for country_code, country_name in ovp.countries_code_name:
             print(f'{country_code} {country_name}')
         #ovp.load_countries_polygons_level4()
@@ -103,6 +104,7 @@ class globe_countries_i18n(video_3D_base):
         im = self.fromMercator(im)
         im = Image.open("globe.png")
         #self.save_2x_globe(im)
+        self.ovp = ovp
         return im
 
     def fromMercator(self, im: Image) -> Image:
@@ -339,6 +341,9 @@ class globe_countries_i18n(video_3D_base):
         return frame1
 
     def get_data_array(self):
+        for bb_data in self.ovp.countries_bboxes:
+            print(f'code: {bb_data["code"]} name en: {bb_data["name_en"]} bbox={bb_data["bbox"].bbox}')
+
         a = np.concatenate(
             (
                 [[1 / self.speed, 0, 0, 1] for _ in range(int(140 * self.speed))],

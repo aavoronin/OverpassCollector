@@ -7,6 +7,7 @@ from data.languages import languages
 from objects3D.country_osm_data import country_info
 from objects3D.map_box_info import map_box_info
 from objects3D.overpass_base import overpass_base
+import xml.etree.ElementTree as ET
 #from jsonpath_ng import jsonpath, parse
 # https://wiki.openstreetmap.org/wiki/RU:Map_Features
 
@@ -59,6 +60,31 @@ class overpass_countries(overpass_base):
             country_name_en = c_row["name:en"]
             print(f'{country_code}, {country_name_en}')
         print("======")
+
+    def extract_bounds(self, xml_string):
+        root = ET.fromstring(xml_string)
+        bounds_element = root.find('relation/bounds')
+
+        minlat = float(bounds_element.get('minlat'))
+        minlon = float(bounds_element.get('minlon'))
+        maxlat = float(bounds_element.get('maxlat'))
+        maxlon = float(bounds_element.get('maxlon'))
+
+        return map_box_info([minlat, minlon, maxlat, maxlon])
+    def get_countries_bounding_boxes(self):
+        countries = self.get_current_countries()
+        self.countries_bboxes = []
+        for d in countries:
+            query = f'''
+                area["ISO3166-1"={d["ISO3166-1"]}]->.boundaryarea;
+                (
+                  rel(area.boundaryarea)["boundary"="administrative"]["admin_level"="2"];
+                );
+                out meta bb;'''
+            #print(query)
+            result = self.exec_query_json(query, build=False)
+            bbox = self.extract_bounds(result)
+            self.countries_bboxes.append({"code": d["ISO3166-1"], "name_en": d["name:en"], "bbox": bbox})
 
     def get_current_countries(self):
         if len(self.selected_countries) == 0:

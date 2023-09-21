@@ -110,8 +110,8 @@ class video_3D_base:
 
     def create_subframes(self):
         i = 0
-        data_arr = self.get_data_array()
         self.init_scene()
+        data_arr = self.get_data_array()
         #frame = np.tile(np.array(self.background_color, dtype=np.uint8), (self.height, self.width, 1))
         #self.iterate_scene(frame, el)
 
