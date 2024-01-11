@@ -1,13 +1,20 @@
 import datetime
+import os
 import pickle
 import time
+import json
 
-import pandas as pd
 from data.languages import languages
 from objects3D.country_osm_data import country_info
 from objects3D.map_box_info import map_box_info
 from objects3D.overpass_base import overpass_base
 import xml.etree.ElementTree as ET
+
+
+import pandas as pd
+#import geopandas as gpd
+#import geodatasets
+
 #from jsonpath_ng import jsonpath, parse
 # https://wiki.openstreetmap.org/wiki/RU:Map_Features
 
@@ -383,4 +390,28 @@ class overpass_countries(overpass_base):
             ci.load_country_lake_data()
 
         print(f'{len(countries)} countries')
+
+    def get_global_land_polygons(self, zoom):
+        start_time = time.time()
+        folder = "c:/Data/natural_earth/ne_10m_land/"
+        f_name = "land_polygons10_outer.txt"
+        f_name = os.path.join(folder, f_name)
+
+        with open(f_name, 'r') as file:
+            # Read the entire content of the file
+            data = file.read()
+        self.global_land_outer_polygons = json.loads(data)
+        self.global_land_outer_polygons_xy = [[
+            [self.deg2xy(lat_lon[1], lat_lon[0], zoom) for lat_lon in poly]
+                    for poly in self.global_land_outer_polygons if len(poly) > 2], []]
+        end_time = time.time()
+        #countries = self.get_current_countries()
+
+        #for ci in self.country_data:
+        #    if len(countries) > 0 and not ci.country_code in [d["ISO3166-1"] for d in countries]:
+        #        continue
+        #    ci.load_country_lake_data()
+        print(f'water polygons')
+
+        #print(f'{len(countries)} countries')
 

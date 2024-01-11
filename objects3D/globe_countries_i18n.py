@@ -1,10 +1,13 @@
 import glfw
 import cv2
+#import matplotlib
 import numpy
 import numpy as np
 from PIL import ImageDraw, ImageFont
 import pygame
 from pygame.locals import *
+#from seaborn import color_palette
+
 from geo.osm_tiles import osm_tiles
 from objects3D.cube3D import *
 from PIL import Image
@@ -12,7 +15,6 @@ from PIL import Image
 from objects3D.overpass_countries import overpass_countries
 from objects3D.polygon_fill_info import polygon_fill_info
 from objects3D.video3D_base import video_3D_base
-
 
 class globe_countries_i18n(video_3D_base):
 
@@ -24,7 +26,7 @@ class globe_countries_i18n(video_3D_base):
 
     def init_video_params(self):
         super().init_video_params()
-        factor = 2
+        factor = 1
         self.width = int(1920 * factor)
         self.height = int(1080 * factor)
         self.video_width = self.width // factor
@@ -95,6 +97,9 @@ class globe_countries_i18n(video_3D_base):
         for country_code, country_name in ovp.countries_code_name:
             print(f'{country_code} {country_name}')
         #ovp.load_countries_polygons_level4()
+        ovp.get_global_land_polygons(zoom)
+
+        self.draw_land_polygons(im, ovp, zoom)
         self.draw_countries_v3(im, ovp, zoom)
         #self.draw_water_v2(im, ovp, zoom)
         self.draw_tiles_info(im, ovp, zoom)
@@ -188,6 +193,12 @@ class globe_countries_i18n(video_3D_base):
             ci_list.append(ci)
         return ci_list
 
+
+#    def get_country_colors(self):
+#        num_colors = len(self.country_codes)
+#        colors = color_palette("hls", len(self.country_codes))
+#        return {self.country_codes[i]: matplotlib.colors.rgb2hex(color) for i, color in enumerate(colors)}
+
     def draw_countries_v3(self, im, ovp, zoom):
         self.no_polygons_countries = []
         i = 0
@@ -202,13 +213,19 @@ class globe_countries_i18n(video_3D_base):
                 polygons_geo_lat_lon = ovp.scan_for_polygons_v3(gb_osm, zoom, name_border)
             if polygons_geo_lat_lon is not None:
                 texture_polygons = ovp.convert_polygon_lat_lon_to_texture_coords(polygons_geo_lat_lon, zoom)
-                fi = polygon_fill_info(fill_color=(255,0,0,255) , border_color=(0,0,0,255))
+                #fi = polygon_fill_info(fill_color=(255,0,0,255) , border_color=(0,0,0,255))
+                fi = polygon_fill_info(fill_color=(255,0,0,255) , border_color=None)
                 self.draw_polygons_on_image(im, texture_polygons, zoom, fi)
                 del polygons_geo_lat_lon
                 del texture_polygons
             else:
                 if ci.country_code in self.no_polygons_countries:
                     self.no_polygons_countries.append(ci.country_code)
+
+    def draw_land_polygons(self, im, ovp, zoom):
+        #fi = polygon_fill_info(fill_color=(255, 255, 255, 255), border_color=(0, 0, 0, 255))
+        fi = polygon_fill_info(fill_color=(255, 255, 255, 255), border_color=None)
+        self.draw_polygons_on_image(im, ovp.global_land_outer_polygons_xy, zoom, fi)
 
     def draw_water_v2(self, im, ovp, zoom):
         self.no_polygons_countries = []
@@ -393,7 +410,4 @@ class globe_countries_i18n(video_3D_base):
             bbox_str = bbox_info.bbox_str_short()
             text_xy = (15 + (im.width * xtile) // n_tiles, 45 + (im.height * ytile) // n_tiles)
             draw.text(text_xy, bbox_str, font=font, align="left", fill=(0, 0, 0))
-
-
-
 
