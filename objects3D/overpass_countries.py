@@ -4,6 +4,8 @@ import pickle
 import time
 import json
 
+from overpy import Overpass
+
 from data.languages import languages
 from objects3D.country_osm_data import country_info
 from objects3D.map_box_info import map_box_info
@@ -12,8 +14,8 @@ import xml.etree.ElementTree as ET
 
 
 import pandas as pd
-#import geopandas as gpd
-#import geodatasets
+import geopandas as gpd
+import geodatasets
 
 #from jsonpath_ng import jsonpath, parse
 # https://wiki.openstreetmap.org/wiki/RU:Map_Features
@@ -394,8 +396,8 @@ class overpass_countries(overpass_base):
     def get_global_land_polygons(self, zoom):
         start_time = time.time()
         folder = "c:/Data/natural_earth/ne_10m_land/"
-        f_name = "land_polygons10_outer.txt"
-        f_name = os.path.join(folder, f_name)
+        f_name1 = "land_polygons10_outer.txt"
+        f_name = os.path.join(folder, f_name1)
 
         with open(f_name, 'r') as file:
             # Read the entire content of the file
@@ -403,15 +405,23 @@ class overpass_countries(overpass_base):
         self.global_land_outer_polygons = json.loads(data)
         self.global_land_outer_polygons_xy = [[
             [self.deg2xy(lat_lon[1], lat_lon[0], zoom) for lat_lon in poly]
-                    for poly in self.global_land_outer_polygons if len(poly) > 2], []]
-        end_time = time.time()
-        #countries = self.get_current_countries()
+                    for poly in json.loads(data) if len(poly) > 2], []]
 
-        #for ci in self.country_data:
-        #    if len(countries) > 0 and not ci.country_code in [d["ISO3166-1"] for d in countries]:
-        #        continue
-        #    ci.load_country_lake_data()
-        print(f'water polygons')
+        f_name1 = "land_polygons10_inner.txt"
+        f_name = os.path.join(folder, f_name1)
+
+        with open(f_name, 'r') as file:
+            # Read the entire content of the file
+            data2 = file.read()
+        self.global_land_inner_polygons_xy = [[
+            [self.deg2xy(lat_lon[1], lat_lon[0], zoom) for lat_lon in poly]
+                    for poly in json.loads(data2) if len(poly) > 2], []]
+
+        del data
+        del data2
+
+        end_time = time.time()
+        print(f'land polygons ({end_time-start_time})')
 
         #print(f'{len(countries)} countries')
 
