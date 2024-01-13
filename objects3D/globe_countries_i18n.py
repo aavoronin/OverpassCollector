@@ -1,6 +1,5 @@
 import glfw
 import cv2
-import matplotlib
 import numpy
 import numpy as np
 from PIL import ImageDraw, ImageFont
@@ -15,6 +14,9 @@ from PIL import Image
 from objects3D.overpass_countries import overpass_countries
 from objects3D.polygon_fill_info import polygon_fill_info
 from objects3D.video3D_base import video_3D_base
+
+
+
 
 class globe_countries_i18n(video_3D_base):
 
@@ -39,8 +41,8 @@ class globe_countries_i18n(video_3D_base):
 
     def init_scene(self):
 
-        zoom = 5
-        factor = 2
+        zoom = 6
+        factor = 1
         #self.ball_3D = ball_3D(factor * (2 ** tiles_power), factor * (2 ** tiles_power), 3)
         #self.ball_3D.create_arrays()
         pygame.init()
@@ -86,7 +88,7 @@ class globe_countries_i18n(video_3D_base):
         ovp.selected_countries = ["BR", "AD", "SM", "AL", "SK", "AT", "GB", "AU", "NO", "SE", "JP", "IT", "GR", "DZ", "KZ", "DK", "GL"] #, "RU", "FR"
         #ovp.selected_countries = ["US", "RU", "IT", "CL", "ES", "GE", "PL", "CH", "CA", "GB", "DK", "CZ", "AL", "DE", "KZ", "UG", "GL", "FR"] #[, "US"]
         #ovp.selected_countries = ["KZ", "UG"]
-        ovp.selected_countries = []
+        #ovp.selected_countries = []
         #ovp.get_countries_bounding_boxes()
         ovp.get_countries_outer_borders()
         #ovp.get_countries_water_polygons()
@@ -236,9 +238,27 @@ class globe_countries_i18n(video_3D_base):
 
     def draw_land_polygons(self, im, ovp, zoom):
         fi = polygon_fill_info(fill_color=self.default_land_color, border_color=None)
-        self.draw_polygons_on_image(im, ovp.global_land_outer_polygons_xy, zoom, fi)
+        self.draw_polygons_on_image(im, [ovp.global_land_polygons_xy["outer"]], zoom, fi)
         fi = polygon_fill_info(fill_color=self.water_color, border_color=None)
-        self.draw_polygons_on_image(im, ovp.global_land_inner_polygons_xy, zoom, fi)
+        self.draw_polygons_on_image(im, [ovp.global_land_polygons_xy["inner"]], zoom, fi)
+
+    def draw_continent_polygons(self, im, ovp, zoom):
+        continent_colors = {
+            "North America": (255, 165, 0),  # Orange
+            "South America": (255, 192, 203),  # Pink
+            "Europe": (255, 0, 0),  # Red
+            "Africa": (0, 128, 0),  # Green
+            "Asia": (255, 255, 0),  # Yellow
+            "Australia": (165, 42, 42),  # Brown
+            "Antarctica": (255, 255, 255)  # White
+        }
+        for continent in continent_colors.keys():
+            if continent not in ovp.global_continent_polygons_xy:
+                continue
+            fi = polygon_fill_info(fill_color=continent_colors[continent], border_color=None)
+            self.draw_polygons_on_image(im, [ovp.global_continent_polygons_xy[continent]["outer"]], zoom, fi)
+            fi = polygon_fill_info(fill_color=self.water_color, border_color=None)
+            self.draw_polygons_on_image(im, [ovp.global_continent_polygons_xy[continent]["inner"]], zoom, fi)
 
     def draw_water_v2(self, im, ovp, zoom):
         self.no_polygons_countries = []

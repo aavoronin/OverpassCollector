@@ -1,21 +1,20 @@
 import datetime
-import os
 import pickle
 import time
 import json
-
-from overpy import Overpass
 
 from data.languages import languages
 from objects3D.country_osm_data import country_info
 from objects3D.map_box_info import map_box_info
 from objects3D.overpass_base import overpass_base
 import xml.etree.ElementTree as ET
-
-
+import requests
+import os
 import pandas as pd
 import geopandas as gpd
-import geodatasets
+#import shapefile
+#import partial
+
 
 #from jsonpath_ng import jsonpath, parse
 # https://wiki.openstreetmap.org/wiki/RU:Map_Features
@@ -393,7 +392,25 @@ class overpass_countries(overpass_base):
 
         print(f'{len(countries)} countries')
 
+
     def get_global_land_polygons(self, zoom):
+        folder = "c:/Data/natural_earth/ne_10m_land/"
+        url = ''
+        file = "ne_10m_land.shp"
+        start_time = time.time()
+
+        if not os.path.exists(os.path.join(folder, file)):
+            self.download_natural_earth_dataset(folder, file, url)
+
+        gdf = gpd.read_file(os.path.join(folder, file))
+        geometry = gdf
+        self.global_land_polygons_xy = land_polygons = {}
+        self.collect_polygons(geometry, land_polygons, zoom)
+
+        end_time = time.time()
+        print(f'continent polygons ({end_time-start_time})')
+
+    def get_global_land_polygons2(self, zoom):
         start_time = time.time()
         folder = "c:/Data/natural_earth/ne_10m_land/"
         f_name1 = "land_polygons10_outer.txt"
@@ -425,3 +442,32 @@ class overpass_countries(overpass_base):
 
         #print(f'{len(countries)} countries')
 
+    def download_natural_earth_dataset(self, folder, file, url):
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        response = requests.get(url)
+        #z = zipfile.ZipFile(BytesIO(response.content))
+        #z.extractall(path=folder)
+
+        with open(os.path.join(folder, file), 'wb') as file:
+            file.write(response.content)
+
+    def get_continents_borders(self, zoom):
+        folder = "c:/Data/natural_earth/ne-10m/"
+        url = 'https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip'
+        file = "ne_10m_admin_0_countries.shp"
+        start_time = time.time()
+
+        if not os.path.exists(os.path.join(folder, file)):
+            self.download_natural_earth_dataset(folder, file, url)
+
+        gdf = gpd.read_file(os.path.join(folder, file))
+        self.global_continent_polygons_xy = dict()
+        for continent in gdf["CONTINENT"]:
+            continent_geometry = gdf[gdf['CONTINENT'] == continent]
+            continent_polygons = {}
+            self.global_continent_polygons_xy[continent] = continent_polygons
+            self.collect_polygons(continent_geometry, continent_polygons, zoom)
+
+        end_time = time.time()
+        print(f'continent polygons ({end_time-start_time})')

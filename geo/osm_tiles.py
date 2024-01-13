@@ -91,6 +91,14 @@ class osm_tiles:
         self.tile_cache.save_to_cache(total_image, fname)
         return total_image
 
+    def get_world_empty_image_for_globe(self, z):
+        n_tiles = pow(2, z)
+        self.tiles_grid = [[self.get_tile_image(z, x, y) for x in range(n_tiles)] for y in range(n_tiles)]
+        self.total_width = self.tiles_grid[0][0].shape[0] * n_tiles
+        self.total_height = self.total_width // 2
+        total_image = Image.new(mode="RGB", size=(self.total_width, self.total_height))
+        return total_image
+
     def get_world_image_for_globe(self, z, bboxes, draw_tile_numbers = False):
         fname = f'world_z_{z}.png'
         n_tiles = pow(2, z)

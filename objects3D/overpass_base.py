@@ -9,6 +9,7 @@ import zlib
 #import time
 import overpy
 import overpass
+from shapely import MultiPolygon, Polygon
 
 #https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL
 #http://overpass-turbo.eu/
@@ -876,4 +877,27 @@ class overpass_base:
                 bbox = self.get_tile_bbox(xtile, ytile)
                 row_bboxes.append(map_box_info(bbox))
             self.tile_bboxes.append(row_bboxes)
+
+    def collect_polygons(self, geometry, polygons, zoom):
+        polygons["outer"] = []
+        polygons["inner"] = []
+        for _, row in geometry.iterrows():
+            if isinstance(row["geometry"], MultiPolygon):
+                for polygon in row["geometry"].geoms:
+                    polygons["outer"].append(
+                        [self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords])
+
+                    for interior in polygon.interiors:
+                        polygons["inner"].append(
+                            [self.deg2xy(point[1], point[0], zoom) for point in interior.coords])
+            elif isinstance(row["geometry"], Polygon):
+                print(1)
+                polygon = row["geometry"]
+                polygons["outer"].append(
+                    [self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords])
+                for interior in polygon.interiors:
+                    polygons["inner"].append(
+                        [self.deg2xy(point[1], point[0], zoom) for point in interior.coords])
+            else:
+                print(2)
 
