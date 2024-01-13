@@ -246,7 +246,7 @@ class globe_countries_i18n(video_3D_base):
         continent_colors = {
             "North America": (255, 165, 0),  # Orange
             "South America": (255, 192, 203),  # Pink
-            "Europe": (255, 0, 0),  # Red
+            "Europe": (128, 0, 0),  # Red
             "Africa": (0, 128, 0),  # Green
             "Asia": (255, 255, 0),  # Yellow
             "Oceania": (165, 42, 42),  # Brown
