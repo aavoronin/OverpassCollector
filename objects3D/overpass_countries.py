@@ -469,6 +469,10 @@ class overpass_countries(overpass_base):
                 continent_geometry = self.get_europe_geom(gdf_countries, gdf_provinces)
             elif continent == 'Asia':
                 continent_geometry = self.get_asia_geom(gdf_countries, gdf_provinces)
+            elif continent == 'Africa':
+                continent_geometry = self.get_africa_geom(gdf_countries, gdf_provinces)
+            elif continent == 'South America':
+                continent_geometry = self.get_south_america_geom(gdf_countries, gdf_provinces)
             else:
                 continent_geometry = gdf_countries[gdf_countries['CONTINENT'] == continent]
             print(f"geometry for {continent}")
@@ -483,9 +487,7 @@ class overpass_countries(overpass_base):
         # Step 1: Filter all countries which are marked as 'CONTINENT' == 'Europe'
         europe_countries = gdf_countries[gdf_countries['CONTINENT'] == 'Europe']
         # Step 2: Exclude Russia, France, and Turkey
-        excluded_countries = ['Russia', 'France',
-                              #'Turkey'
-                              ]
+        excluded_countries = ['Russia', 'France',  'Turkey' ]
         europe_countries = europe_countries[~europe_countries['NAME'].isin(excluded_countries)]
         # Fill null values with '-'
         gdf_provinces['name'] = gdf_provinces['name'].fillna('-')
@@ -497,22 +499,65 @@ class overpass_countries(overpass_base):
             (gdf_provinces['admin'] == 'France') &
             ~(gdf_provinces['region'].isin(['Guyane française', 'Martinique', 'Guadeloupe', 'Réunion', 'Mayotte']))]
 
-        europe = pd.concat([europe_countries, selected_provinces_Russia, selected_provinces_France])
+        turkey_in_europe = ['Edirne', 'Tekirdag', 'Kirklareli']
+        selected_provinces_Turkey = gdf_provinces[
+            (gdf_provinces['admin'] == 'Turkey') &
+            (gdf_provinces['name'].isin(['Edirne', 'Tekirdag', 'Kirklareli']))]
+
+        europe = pd.concat([europe_countries, selected_provinces_Russia, selected_provinces_France, selected_provinces_Turkey])
         return europe
 
     def get_asia_geom(self, gdf_countries, gdf_provinces):
         # Step 1: Filter all countries which are marked as 'CONTINENT' == 'Asia'
-        europe_countries = gdf_countries[gdf_countries['CONTINENT'] == 'Asia']
+        asia_countries = gdf_countries[gdf_countries['CONTINENT'] == 'Asia']
         # Step 2: Exclude Russia, France, and Turkey
-        excluded_countries = ['Russia'
-                #, 'France', 'Turkey'
-                              ]
-        europe_countries = europe_countries[~europe_countries['NAME'].isin(excluded_countries)]
+        excluded_countries = ['Russia', 'Turkey']
+        asia_countries = asia_countries[~asia_countries['NAME'].isin(excluded_countries)]
         # Fill null values with '-'
         gdf_provinces['name'] = gdf_provinces['name'].fillna('-')
-        selected_provinces = gdf_provinces[
+        selected_provinces_Russia = gdf_provinces[
             (gdf_provinces['admin'] == 'Russia') &
             ~(gdf_provinces['region'].isin(['Northwestern', 'Volga', 'Central']))]
 
-        europe = pd.concat([europe_countries, selected_provinces])
+        turkey_in_europe = ['Edirne', 'Tekirdag', 'Kirklareli']
+        selected_provinces_Turkey = gdf_provinces[
+            (gdf_provinces['admin'] == 'Turkey') &
+            ~(gdf_provinces['name'].isin(['Edirne', 'Tekirdag', 'Kirklareli']))]
+
+        selected_provinces_Egypt = gdf_provinces[
+            (gdf_provinces['admin'] == 'Egypt') &
+            (gdf_provinces['name_en'].isin(['South Sinai', 'North Sinai']))]
+
+        asia = pd.concat([asia_countries, selected_provinces_Russia, selected_provinces_Turkey, selected_provinces_Egypt])
+        return asia
+
+    def get_south_america_geom(self, gdf_countries, gdf_provinces):
+        # Step 1: Filter all countries which are marked as 'CONTINENT' == 'Asia'
+        europe_countries = gdf_countries[gdf_countries['CONTINENT'] == 'South America']
+        # Step 2: Exclude Russia, France, and Turkey
+        excluded_countries = []
+        europe_countries = europe_countries[~europe_countries['NAME'].isin(excluded_countries)]
+        # Fill null values with '-'
+        gdf_provinces['name'] = gdf_provinces['name'].fillna('-')
+        selected_provinces_France = gdf_provinces[
+            (gdf_provinces['admin'] == 'France') &
+            (gdf_provinces['region'].isin(['Guyane française']))]
+
+        europe = pd.concat([europe_countries, selected_provinces_France])
         return europe
+
+    def get_africa_geom(self, gdf_countries, gdf_provinces):
+        # Step 1: Filter all countries which are marked as 'CONTINENT' == 'Asia'
+        africa_countries = gdf_countries[gdf_countries['CONTINENT'] == 'Africa']
+        # Step 2: Exclude Russia, France, and Turkey
+        excluded_countries = ['Egypt']
+        africa_countries = africa_countries[~africa_countries['NAME'].isin(excluded_countries)]
+        # Fill null values with '-'
+        gdf_provinces['name'] = gdf_provinces['name'].fillna('-')
+        
+        selected_provinces_Egypt = gdf_provinces[
+            (gdf_provinces['admin'] == 'Egypt') &
+            ~(gdf_provinces['name_en'].isin(['South Sinai', 'North Sinai']))]
+
+        africa = pd.concat([africa_countries, selected_provinces_Egypt])
+        return africa

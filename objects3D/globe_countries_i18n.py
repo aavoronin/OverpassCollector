@@ -249,7 +249,7 @@ class globe_countries_i18n(video_3D_base):
             "Europe": (255, 0, 0),  # Red
             "Africa": (0, 128, 0),  # Green
             "Asia": (255, 255, 0),  # Yellow
-            "Australia": (165, 42, 42),  # Brown
+            "Oceania": (165, 42, 42),  # Brown
             "Antarctica": (255, 255, 255)  # White
         }
         for continent in continent_colors.keys():
