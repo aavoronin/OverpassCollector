@@ -891,7 +891,6 @@ class overpass_base:
                         polygons["inner"].append(
                             [self.deg2xy(point[1], point[0], zoom) for point in interior.coords])
             elif isinstance(row["geometry"], Polygon):
-                print(1)
                 polygon = row["geometry"]
                 polygons["outer"].append(
                     [self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords])

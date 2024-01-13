@@ -454,20 +454,65 @@ class overpass_countries(overpass_base):
 
     def get_continents_borders(self, zoom):
         folder = "c:/Data/natural_earth/ne-10m/"
-        url = 'https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip'
-        file = "ne_10m_admin_0_countries.shp"
+        #file = "ne_10m_admin_0_countries.shp"
+
         start_time = time.time()
+        # 'https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip'
+        file_name_gdf_countries = "ne_10m_admin_0_countries.shp"
+        file_name_gdf_states_province = "ne_10m_admin_1_states_provinces.shp"
+        gdf_countries = gpd.read_file(os.path.join(folder, file_name_gdf_countries))
+        gdf_provinces = gpd.read_file(os.path.join(folder, file_name_gdf_states_province))
 
-        if not os.path.exists(os.path.join(folder, file)):
-            self.download_natural_earth_dataset(folder, file, url)
-
-        gdf = gpd.read_file(os.path.join(folder, file))
         self.global_continent_polygons_xy = dict()
-        for continent in gdf["CONTINENT"]:
-            continent_geometry = gdf[gdf['CONTINENT'] == continent]
+        for continent in gdf_countries["CONTINENT"].unique():
+            if continent == 'Europe':
+                continent_geometry = self.get_europe_geom(gdf_countries, gdf_provinces)
+            elif continent == 'Asia':
+                continent_geometry = self.get_asia_geom(gdf_countries, gdf_provinces)
+            else:
+                continent_geometry = gdf_countries[gdf_countries['CONTINENT'] == continent]
+            print(f"geometry for {continent}")
             continent_polygons = {}
             self.global_continent_polygons_xy[continent] = continent_polygons
             self.collect_polygons(continent_geometry, continent_polygons, zoom)
 
         end_time = time.time()
         print(f'continent polygons ({end_time-start_time})')
+
+    def get_europe_geom(self, gdf_countries, gdf_provinces):
+        # Step 1: Filter all countries which are marked as 'CONTINENT' == 'Europe'
+        europe_countries = gdf_countries[gdf_countries['CONTINENT'] == 'Europe']
+        # Step 2: Exclude Russia, France, and Turkey
+        excluded_countries = ['Russia', 'France',
+                              #'Turkey'
+                              ]
+        europe_countries = europe_countries[~europe_countries['NAME'].isin(excluded_countries)]
+        # Fill null values with '-'
+        gdf_provinces['name'] = gdf_provinces['name'].fillna('-')
+        selected_provinces_Russia = gdf_provinces[
+            (gdf_provinces['admin'] == 'Russia') &
+            (gdf_provinces['region'].isin(['Northwestern', 'Volga', 'Central']))]
+
+        selected_provinces_France = gdf_provinces[
+            (gdf_provinces['admin'] == 'France') &
+            ~(gdf_provinces['region'].isin(['Guyane française', 'Martinique', 'Guadeloupe', 'Réunion', 'Mayotte']))]
+
+        europe = pd.concat([europe_countries, selected_provinces_Russia, selected_provinces_France])
+        return europe
+
+    def get_asia_geom(self, gdf_countries, gdf_provinces):
+        # Step 1: Filter all countries which are marked as 'CONTINENT' == 'Asia'
+        europe_countries = gdf_countries[gdf_countries['CONTINENT'] == 'Asia']
+        # Step 2: Exclude Russia, France, and Turkey
+        excluded_countries = ['Russia'
+                #, 'France', 'Turkey'
+                              ]
+        europe_countries = europe_countries[~europe_countries['NAME'].isin(excluded_countries)]
+        # Fill null values with '-'
+        gdf_provinces['name'] = gdf_provinces['name'].fillna('-')
+        selected_provinces = gdf_provinces[
+            (gdf_provinces['admin'] == 'Russia') &
+            ~(gdf_provinces['region'].isin(['Northwestern', 'Volga', 'Central']))]
+
+        europe = pd.concat([europe_countries, selected_provinces])
+        return europe
