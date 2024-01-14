@@ -40,18 +40,21 @@ class globe_countries_i18n(video_3D_base):
         self.first_frames_delay = 0
 
     def init_scene(self):
-
         zoom = 6
         factor = 1
         #self.ball_3D = ball_3D(factor * (2 ** tiles_power), factor * (2 ** tiles_power), 3)
         #self.ball_3D.create_arrays()
         pygame.init()
         display = (self.width, self.height)  # self.expanded_size
-        pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
+        screen = pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
         self.clock = pygame.time.Clock()
 
         self.create_globe_texture(zoom)
         self.sphere_d = int(self.height * 0.8)
+
+        pygame.display.gl_set_attribute(pygame.GL_DOUBLEBUFFER, 1)
+        c1 = (70/255.0, 130/255.0, 180/255.0)
+        glClearColor(c1[0], c1[1], c1[2], 0.0)
 
         glMatrixMode(GL_PROJECTION)
         gluPerspective(45, (display[0] / display[1]), 0.1, 50.0)
@@ -260,6 +263,12 @@ class globe_countries_i18n(video_3D_base):
             fi = polygon_fill_info(fill_color=self.water_color, border_color=None)
             self.draw_polygons_on_image(im, [ovp.global_continent_polygons_xy[continent]["inner"]], zoom, fi)
 
+    def draw_countries_land_borders(self, im, ovp, zoom):
+        # land_border_color = (64, 64, 64, 128)
+        land_border_color = (255, 255, 255, 128)
+        fi = polygon_fill_info(fill_color=None, border_color=land_border_color, width=3)
+        self.draw_polygons_on_image(im, [ovp.global_country_land_borders["outer"]], zoom, fi)
+
     def draw_water_v2(self, im, ovp, zoom):
         self.no_polygons_countries = []
         i = 0
@@ -298,7 +307,7 @@ class globe_countries_i18n(video_3D_base):
                     gb_osm = ovp.country_border_coastline_osm_json[country_code]
                     polygons = ovp.scan_for_polygons_v2(gb_osm, zoom, name_border)
             if polygons is not None:
-                fi = polygon_fill_info(fill_color=(255,0,0,255) , border_color=(0,0,0,255))
+                fi = polygon_fill_info(fill_color=(255, 0, 0, 255), border_color=(0, 0, 0, 255))
                 self.draw_polygons_on_image(im, polygons, zoom, fi)
                 del polygons
             else:
@@ -414,15 +423,18 @@ class globe_countries_i18n(video_3D_base):
         h = im.height
         for poly in polygons[0]:
             xys = [((xy0[0] * w) / n, (xy0[1] * h / n)) for xy0 in poly]
-            minx = min([xy[0] for xy in xys])
-            miny = min([xy[1] for xy in xys])
-            maxx = max([xy[0] for xy in xys])
-            maxy = max([xy[1] for xy in xys])
+            #minx = min([xy[0] for xy in xys])
+            #miny = min([xy[1] for xy in xys])
+            #maxx = max([xy[0] for xy in xys])
+            #maxy = max([xy[1] for xy in xys])
             draw = ImageDraw.Draw(im, "RGB")
-            if fill_info.border_color is None:
+            if fill_info.border_color is None: # filled polygon without border
                 draw.polygon(xy=xys, fill=fill_info.fill_color)
-            else:
+            elif fill_info.fill_color is not None: # filled polygon with border
                 draw.polygon(xy=xys, fill=fill_info.fill_color, outline=fill_info.border_color)
+            else:
+                pass
+                #draw.polygon(xy=xys, fill=None, outline=fill_info.border_color, width = 3)
 
         return im
 

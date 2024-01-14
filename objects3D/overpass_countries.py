@@ -410,37 +410,6 @@ class overpass_countries(overpass_base):
         end_time = time.time()
         print(f'continent polygons ({end_time-start_time})')
 
-    def get_global_land_polygons2(self, zoom):
-        start_time = time.time()
-        folder = "c:/Data/natural_earth/ne_10m_land/"
-        f_name1 = "land_polygons10_outer.txt"
-        f_name = os.path.join(folder, f_name1)
-
-        with open(f_name, 'r') as file:
-            # Read the entire content of the file
-            data = file.read()
-        self.global_land_outer_polygons = json.loads(data)
-        self.global_land_outer_polygons_xy = [[
-            [self.deg2xy(lat_lon[1], lat_lon[0], zoom) for lat_lon in poly]
-                    for poly in json.loads(data) if len(poly) > 2], []]
-
-        f_name1 = "land_polygons10_inner.txt"
-        f_name = os.path.join(folder, f_name1)
-
-        with open(f_name, 'r') as file:
-            # Read the entire content of the file
-            data2 = file.read()
-        self.global_land_inner_polygons_xy = [[
-            [self.deg2xy(lat_lon[1], lat_lon[0], zoom) for lat_lon in poly]
-                    for poly in json.loads(data2) if len(poly) > 2], []]
-
-        del data
-        del data2
-
-        end_time = time.time()
-        print(f'land polygons ({end_time-start_time})')
-
-        #print(f'{len(countries)} countries')
 
     def download_natural_earth_dataset(self, folder, file, url):
         if not os.path.exists(folder):
@@ -451,6 +420,21 @@ class overpass_countries(overpass_base):
 
         with open(os.path.join(folder, file), 'wb') as file:
             file.write(response.content)
+
+    def get_country_borders(self, zoom):
+        folder = "c:/Data/natural_earth/ne-10m/"
+        start_time = time.time()
+        # 'https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip'
+        file_name_gdf_countries = "ne_10m_admin_0_countries.shp"
+        gdf_countries = gpd.read_file(os.path.join(folder, file_name_gdf_countries))
+
+        geometry = gdf_countries
+        country_polygons = {}
+        self.global_country_land_borders = country_polygons
+        self.collect_polygons(geometry, country_polygons, zoom)
+
+        end_time = time.time()
+        print(f'continent polygons ({end_time-start_time})')
 
     def get_continents_borders(self, zoom):
         folder = "c:/Data/natural_earth/ne-10m/"

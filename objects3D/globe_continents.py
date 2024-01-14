@@ -8,6 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 class globe_continents(globe_countries_i18n):
     def __init__(self):
         super().__init__()
+        self.speed = 2.5
 
     def get_globe_texture_image(self, zoom):
         ovp = overpass_countries()
@@ -22,6 +23,7 @@ class globe_continents(globe_countries_i18n):
         #ovp.selected_countries = []
         #ovp.get_countries_bounding_boxes()
         ovp.get_continents_borders(zoom)
+        ovp.get_country_borders(zoom)
         ovp.force_reload_cache = []
         ovp.force_recalc_polygons = []
         #ovp.get_list_of_admin_level_2_borders(True)
@@ -32,6 +34,7 @@ class globe_continents(globe_countries_i18n):
         self.fill_all_world(im, ovp, zoom)
         self.draw_land_polygons(im, ovp, zoom)
         self.draw_continent_polygons(im, ovp, zoom)
+        #self.draw_countries_land_borders(im, ovp, zoom)
 
         im.save("globe.png")
         im = self.fromMercator(im)
