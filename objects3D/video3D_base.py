@@ -7,6 +7,7 @@ from OpenGL.raw.GLUT import glutSwapBuffers, glutPostRedisplay, glutSolidSphere
 from PIL import ImageFont
 from PIL import Image
 from PIL import ImageDraw
+from PIL.Image import MAX_IMAGE_PIXELS
 from vpython import *
 from cv2 import VideoWriter_fourcc, VideoWriter
 import pygame
@@ -24,7 +25,6 @@ from PIL import Image
 #from OpenGL_accelerate import numpy_formathandler
 
 #https://www.youtube.com/watch?v=Mwzz-Y6t-v8
-
 
 class video_3D_base:
 

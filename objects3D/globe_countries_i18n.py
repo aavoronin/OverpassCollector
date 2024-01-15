@@ -163,6 +163,7 @@ class globe_countries_i18n(video_3D_base):
         # draw = ImageDraw.Draw(mercator)
         # draw.line((0, h2, w, h2))
         mercator.save("globe.png")
+
     def evaluateLat(self, y, h2):
         debug = False
         self.pi_div_2 = math.pi / 2.0

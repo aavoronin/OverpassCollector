@@ -36,6 +36,9 @@ class overpass_countries(overpass_base):
         self.use_tiles_limit = False
         self.tiles_limit_y = (0, 10)
         self.tiles_limit_x = (0, 32)
+        self.continent_info = []
+        self.ocean_info = []
+        self.countries_info = []
 
     def load(self):
         self.get_list_of_countries()
@@ -408,7 +411,7 @@ class overpass_countries(overpass_base):
         self.collect_polygons(geometry, land_polygons, zoom)
 
         end_time = time.time()
-        print(f'continent polygons ({end_time-start_time})')
+        print(f'land polygons ({end_time-start_time})')
 
 
     def download_natural_earth_dataset(self, folder, file, url):
@@ -434,7 +437,7 @@ class overpass_countries(overpass_base):
         self.collect_polygons(geometry, country_polygons, zoom)
 
         end_time = time.time()
-        print(f'continent polygons ({end_time-start_time})')
+        print(f'country polygons ({end_time-start_time})')
 
     def get_continents_borders(self, zoom):
         folder = "c:/Data/natural_earth/ne-10m/"
@@ -545,3 +548,30 @@ class overpass_countries(overpass_base):
 
         africa = pd.concat([africa_countries, selected_provinces_Egypt])
         return africa
+
+    def get_continent_labels(self, zoom, lang):
+        query = '''[out:json];node["place"="continent"];out;'''
+        data = self.exec_query_json(query, "out", build=False)
+        self.get_labels_info(data, self.continent_info, lang, zoom)
+
+    def get_ocean_labels(self, zoom, lang):
+        query = '''[out:json];node["place"="ocean"];out;'''
+        data = self.exec_query_json(query, "out", build=False)
+        self.get_labels_info(data, self.ocean_info, lang, zoom)
+
+
+    def get_labels_info(self, data, info, lang, zoom):
+        name_tag_lang = f'name:{lang}'
+        name_tag_en = f'name:en'
+        for element in data['elements']:
+            try:
+                lat = element['lat']
+                lon = element['lon']
+                tags = element['tags']
+                name = tags[name_tag_lang] if name_tag_lang in tags else tags[name_tag_en] \
+                    if name_tag_en in tags else tags["name"] if "name" in tags else '-'
+                name_en = tags[name_tag_en] if name_tag_en in tags else tags["name"] if "name" in tags else '-'
+                info.append({"lat": lat, "lon": lon, "name": name, "name_en": name_en,
+                                            "xy": self.deg2xy(lat, lon, zoom)})
+            except KeyError:
+                continue
