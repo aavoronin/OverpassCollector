@@ -401,7 +401,7 @@ class overpass_countries(overpass_base):
         print(f'{len(countries)} countries')
 
 
-    def get_global_land_polygons(self, zoom):
+    def get_global_land_polygons(self):
         folder = "c:/Data/natural_earth/ne_10m_land/"
         url = ''
         file = "ne_10m_land.shp"
@@ -413,7 +413,10 @@ class overpass_countries(overpass_base):
         gdf = gpd.read_file(os.path.join(folder, file))
         geometry = gdf
         self.global_land_polygons_xy = land_polygons = {}
-        self.collect_polygons(geometry, land_polygons, zoom)
+        self.collect_polygons(geometry, land_polygons)
+        #[self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords]
+
+
 
         end_time = time.time()
         print(f'land polygons ({end_time-start_time})')
@@ -429,7 +432,7 @@ class overpass_countries(overpass_base):
         with open(os.path.join(folder, file), 'wb') as file:
             file.write(response.content)
 
-    def get_country_borders(self, zoom):
+    def get_country_borders(self):
         folder = "c:/Data/natural_earth/ne-10m/"
         start_time = time.time()
         # 'https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip'
@@ -439,12 +442,12 @@ class overpass_countries(overpass_base):
         geometry = gdf_countries
         country_polygons = {}
         self.global_country_land_borders = country_polygons
-        self.collect_polygons(geometry, country_polygons, zoom)
+        self.collect_polygons(geometry, country_polygons)
 
         end_time = time.time()
         print(f'country polygons ({end_time-start_time})')
 
-    def get_continents_borders(self, zoom, ovp):
+    def get_continents_borders(self, ovp):
         cache_name = "continents_borders ne-10m"
         md5 = hashlib.md5(cache_name.encode('utf-8')).hexdigest()
         fname = f"{self.cache_path}\\{str(md5)}.zlib"
@@ -475,7 +478,7 @@ class overpass_countries(overpass_base):
             print(f"geometry for {continent}")
             continent_polygons = {}
             self.global_continent_polygons_xy[continent] = continent_polygons
-            self.collect_polygons(continent_geometry, continent_polygons, zoom)
+            self.collect_polygons(continent_geometry, continent_polygons, self.zoom)
 
         end_time = time.time()
         ovp.save_to_cache(fname, self.global_continent_polygons_xy)
@@ -560,41 +563,41 @@ class overpass_countries(overpass_base):
         africa = pd.concat([africa_countries, selected_provinces_Egypt])
         return africa
 
-    def get_continent_labels(self, zoom, lang, label_size):
+    def get_continent_labels(self, lang, label_size):
         query = '''[out:json];node["place"="continent"];out;'''
         data = self.exec_query_json(query, "out", build=False)
-        self.get_labels_info(data, self.continent_info, lang, zoom)
+        self.get_labels_info(data, self.continent_info, lang)
         self.continent_info = [{**info, "size": label_size} for info in self.continent_info]
         asia = next(filter(lambda o: o["name_en"].startswith("Asia"), self.continent_info), None)
         asia['size'] *= 2.5
         n_america = next(filter(lambda o: o["name_en"].startswith("North"), self.continent_info), None)
         n_america['lon'] += 15.0
         n_america['lat'] -= 10.0
-        n_america['xy'] = self.deg2xy(n_america['lat'], n_america['lon'], zoom)
+        #n_america['xy'] = self.deg2xy(n_america['lat'], n_america['lon'], self.zoom)
         europe = next(filter(lambda o: o["name_en"].startswith("Europe"), self.continent_info), None)
         europe['lon'] += 20.0
-        europe['xy'] = self.deg2xy(europe['lat'], europe['lon'], zoom)
+        #europe['xy'] = self.deg2xy(europe['lat'], europe['lon'], self.zoom)
         europe['size'] *= 2
         s_america = next(filter(lambda o: o["name_en"].startswith("South"), self.continent_info), None)
         s_america['lat'] += 15.0
         s_america['lon'] += 10.0
-        s_america['xy'] = self.deg2xy(s_america['lat'], s_america['lon'], zoom)
+        #s_america['xy'] = self.deg2xy(s_america['lat'], s_america['lon'], self.zoom)
         antarctica = next(filter(lambda o: o["name_en"].startswith("Antarctica"), self.continent_info), None)
         antarctica['lon'] += 50.0
-        antarctica['xy'] = self.deg2xy(antarctica['lat'], antarctica['lon'], zoom)
+        #antarctica['xy'] = self.deg2xy(antarctica['lat'], antarctica['lon'], self.zoom)
 
-    def get_ocean_labels(self, zoom, lang, label_size):
+    def get_ocean_labels(self, lang, label_size):
         query = '''[out:json];node["place"="ocean"];out;'''
         data = self.exec_query_json(query, "out", build=False)
-        self.get_labels_info(data, self.ocean_info, lang, zoom)
+        self.get_labels_info(data, self.ocean_info, lang)
         self.ocean_info = [{**info, "size": label_size} for info in self.ocean_info]
         arctic = next(filter(lambda o: o["name_en"].startswith("Arctic"), self.ocean_info), None)
         arctic['lat'] = 75.0
-        arctic['xy'] = self.deg2xy(arctic['lat'], arctic['lon'], zoom)
+        #arctic['xy'] = self.deg2xy(arctic['lat'], arctic['lon'], self.zoom)
         pacific = next(filter(lambda o: o["name_en"].startswith("Pacific"), self.ocean_info), None)
         pacific['size'] *= 2.5
 
-    def get_labels_info(self, data, info, lang, zoom):
+    def get_labels_info(self, data, info, lang):
         name_tag_lang = f'name:{lang}'
         name_tag_en = f'name:en'
         for element in data['elements']:
@@ -605,8 +608,7 @@ class overpass_countries(overpass_base):
                 name = tags[name_tag_lang] if name_tag_lang in tags else tags[name_tag_en] \
                     if name_tag_en in tags else tags["name"] if "name" in tags else '-'
                 name_en = tags[name_tag_en] if name_tag_en in tags else tags["name"] if "name" in tags else '-'
-                xy = self.deg2xy(lat, lon, zoom)
-                info.append({"lat": lat, "lon": lon, "name": name, "name_en": name_en,
-                                            "xy": xy})
+                #xy = self.deg2xy(lat, lon, self.zoom)
+                info.append({"lat": lat, "lon": lon, "name": name, "name_en": name_en})
             except KeyError:
                 continue

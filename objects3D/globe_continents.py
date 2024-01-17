@@ -19,75 +19,74 @@ class globe_continents(globe_countries_i18n):
         self.speed = 1.8
 
     def get_globe_texture_image(self, zoom):
-        im, ovp = self.init_image_and_ovp(zoom)
+        self.zoom = zoom
+        self.init_image_and_ovp()
 
-        ovp.load()
-        ovp.selected_countries = ["BR", "AD", "SM", "AL", "SK", "AT", "GB", "AU", "NO", "SE", "JP", "IT", "GR", "DZ", "KZ", "DK", "GL"] #, "RU", "FR"
-        ovp.selected_countries = ["KZ", "UG"]
+        self.ovp.load()
+        self.ovp.selected_countries = ["BR", "AD", "SM", "AL", "SK", "AT", "GB", "AU", "NO", "SE", "JP", "IT", "GR", "DZ", "KZ", "DK", "GL"] #, "RU", "FR"
+        self.ovp.selected_countries = ["KZ", "UG"]
         #ovp.selected_countries = []
         #ovp.get_countries_bounding_boxes()
         lang = "en"
-        self.large_labels_base_size = im.height // 128
-        ovp.get_global_land_polygons(zoom)
-        ovp.get_continents_borders(zoom, ovp)
-        ovp.get_country_borders(zoom)
-        ovp.get_continent_labels(zoom, lang, self.large_labels_base_size)
-        ovp.get_ocean_labels(zoom, lang, self.large_labels_base_size)
-        ovp.force_reload_cache = []
-        ovp.force_recalc_polygons = []
+        self.large_labels_base_size = self.im.height // 128
+        self.ovp.get_global_land_polygons()
+        self.ovp.get_continents_borders(self.ovp)
+        self.ovp.get_country_borders()
+        self.ovp.get_continent_labels(lang, self.large_labels_base_size)
+        self.ovp.get_ocean_labels(lang, self.large_labels_base_size)
+        self.ovp.force_reload_cache = []
+        self.ovp.force_recalc_polygons = []
         #ovp.get_list_of_admin_level_2_borders(True)
         #ovp.get_list_of_countries()
 
-        self.fill_all_world(im, ovp, zoom)
-        self.draw_land_polygons(im, ovp, zoom)
-        self.draw_continent_polygons(im, ovp, zoom)
-        self.draw_continent_labels(im, ovp, zoom, lang)
-        self.draw_ocean_labels(im, ovp, zoom, lang)
-        im = self.draw._image
+        self.fill_all_world()
+        self.draw_land_polygons()
+        self.draw_continent_polygons()
+        self.draw_continent_labels(lang)
+        self.draw_ocean_labels(lang)
+        self.im = self.draw._image
+        #self.im = self.draw._image
         #self.draw_countries_land_borders(im, ovp, zoom)
 
-        im.save("globe.png")
-        im = self.fromMercator(im)
-        im = Image.open("globe.png")
+        self.im.save("globe.png")
+        self.fromMercator()
+        self.im = Image.open("globe.png")
 
-        self.ovp = ovp
-        return im
-
-    def draw_continent_labels(self, im, ovp, zoom, lang):
+    def draw_continent_labels(self, lang):
         color = (0, 0, 0)
-        font_size = im.height // 128
+        font_size = self.im.height // 128
         font_size2 = 256
         font = ImageFont.truetype('fonts\\TimesNewRomanRegular.ttf', font_size)
         font2 = ImageFont.truetype('fonts\\TimesNewRomanRegular.ttf', font_size2)
 
-        n = 2 ** zoom
-        w = im.width
-        h = im.height
+        n = 2 ** self.zoom
+        w = self.im.width
+        h = self.im.height
 
-        label_info = ovp.continent_info
-        self.draw_labels_core(color, font, font2, h, im, label_info, lang, n, ovp, w, zoom)
+        label_info = self.ovp.continent_info
+        self.draw_labels_core(color, font, font2, h, label_info, lang, n, w)
 
-    def draw_ocean_labels(self, im, ovp, zoom, lang):
+    def draw_ocean_labels(self, lang):
         color = (0, 0, 192)
-        font_size = im.height // 128
+        font_size = self.im.height // 128
         font_size2 = 256
         font = ImageFont.truetype('fonts\\TimesNewRomanRegular.ttf', font_size)
         font2 = ImageFont.truetype('fonts\\TimesNewRomanRegular.ttf', font_size2)
 
-        n = 2 ** zoom
-        w = im.width
-        h = im.height
-        label_info = ovp.ocean_info
+        n = 2 ** self.zoom
+        w = self.im.width
+        h = self.im.height
+        label_info = self.ovp.ocean_info
 
-        self.draw_labels_core(color, font, font2, h, im, label_info, lang, n, ovp, w, zoom)
+        self.draw_labels_core(color, font, font2, h, label_info, lang, n, w)
 
-    def draw_labels_core(self, color, font, font2, h, im, label_info, lang, n, ovp, w, zoom):
+    def draw_labels_core(self, color, font, font2, h, label_info, lang, n, w):
 
-        im_mask = np.full_like(im, 255)
+        im_mask = np.full_like(self.im, 255)
         im_mask_img = Image.fromarray(im_mask)
         im_mask_img_draw = ImageDraw.Draw(im_mask_img)
 
-        im_stamp = np.zeros_like(im)
+        im_stamp = np.zeros_like(self.im)
         im_stamp_img = Image.fromarray(im_stamp)
         im_stamp_img_draw = ImageDraw.Draw(im_stamp_img)
 
@@ -97,7 +96,7 @@ class globe_continents(globe_countries_i18n):
 
         for cont_i in label_info:
             # self.draw_label(color, cont_i, font, h, lang, n, w)
-            self.draw_label_polygons(color, cont_i, font, font2, h, lang, n, w, zoom, ovp, im,
+            self.draw_label_polygons(color, cont_i, font, font2, h, lang, n, w,
                                      im_mask_img_draw, im_stamp_img_draw, fi_letter_color, fi_black, fi_white)
 
         #im_mask = np.array(im_mask_img_draw._image)
@@ -116,14 +115,14 @@ class globe_continents(globe_countries_i18n):
         #im |= im_stamp
 
 
-    def draw_label_polygons(self, color, cont_i, font, font2, h, lang, n, w, zoom, ovp, im,
+    def draw_label_polygons(self, color, cont_i, font, font2, h, lang, n, w,
                             im_mask_img_draw, im_stamp_img_draw, fi_letter_color, fi_black, fi_white):
-        xy0 = cont_i["xy"]
+        xy0 = self.ovp.deg2xy(cont_i['lat'], cont_i['lon'], self.zoom)
         lat = cont_i["lat"]
         lon = cont_i["lon"]
         s = cont_i["name"]
         font_h = cont_i["size"]
-        n = 2 ** zoom
+        n = 2 ** self.zoom
         bbox = self.draw.multiline_textbbox((0.0, 0.0), s, font=font, spacing=0, language=lang)
         bbox2 = self.draw.multiline_textbbox((0.0, 0.0), s, font=font2, spacing=0, language=lang)
         ww, hh = int(bbox[2] - bbox[0] + 1), int(bbox[3] - bbox[1] + 1)

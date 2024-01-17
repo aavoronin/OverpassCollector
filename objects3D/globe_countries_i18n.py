@@ -77,60 +77,59 @@ class globe_countries_i18n(video_3D_base):
         glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
 
     def create_globe_texture(self, zoom):
-        im = self.get_globe_texture_image(zoom)
-        im.save("image.png", 'png')
+        self.get_globe_texture_image(zoom)
+        self.im.save("image.png", 'png')
         self.texture = self.read_texture("image.png", flip_x=True)
 
     def get_globe_texture_image(self, zoom):
-        im, ovp = self.init_image_and_ovp(zoom)
-        #im = ot.get_world_image_for_globe(zoom, ovp.tile_bboxes)
+        self.zoom = zoom
+        self.init_image_and_ovp()
+        #self.im = self.ot.get_world_image_for_globe(zoom, self.ovp.tile_bboxes)
 
-        ovp.load()
-        ovp.selected_countries = ["BR", "AD", "SM", "AL", "SK", "AT", "GB", "AU", "NO", "SE", "JP", "IT", "GR", "DZ", "KZ", "DK", "GL"] #, "RU", "FR"
+        self.ovp.load()
+        self.ovp.selected_countries = ["BR", "AD", "SM", "AL", "SK", "AT", "GB", "AU", "NO", "SE", "JP", "IT", "GR", "DZ", "KZ", "DK", "GL"] #, "RU", "FR"
         #ovp.selected_countries = ["US", "RU", "IT", "CL", "ES", "GE", "PL", "CH", "CA", "GB", "DK", "CZ", "AL", "DE", "KZ", "UG", "GL", "FR"] #[, "US"]
         #ovp.selected_countries = ["KZ", "UG"]
         #ovp.selected_countries = []
         #ovp.get_countries_bounding_boxes()
-        ovp.get_countries_outer_borders()
+        self.ovp.get_countries_outer_borders()
         #ovp.get_countries_water_polygons()
-        ovp.force_reload_cache = []
-        ovp.force_recalc_polygons = []
+        self.ovp.force_reload_cache = []
+        self.ovp.force_recalc_polygons = []
         #ovp.get_list_of_admin_level_2_borders(True)
 
         #ovp.load()
-        ovp.get_list_of_countries()
-        for country_code, country_name in ovp.countries_code_name:
+        self.ovp.get_list_of_countries()
+        for country_code, country_name in self.ovp.countries_code_name:
             print(f'{country_code} {country_name}')
         #ovp.load_countries_polygons_level4()
-        ovp.get_global_land_polygons(zoom)
+        self.ovp.get_global_land_polygons(zoom)
 
-        self.fill_all_world(im, ovp, zoom)
-        self.draw_land_polygons(im, ovp, zoom)
-        self.draw_countries_v3(im, ovp, zoom)
-        #self.draw_water_v2(im, ovp, zoom)
-        #self.draw_tiles_info(im, ovp, zoom)
-        #ot.draw_tiles_numbers(ovp.scan_zoom, im)
+        self.fill_all_world()
+        self.draw_land_polygons()
+        #self.draw_countries_v3()
+        #self.draw_water_v2()
+        #self.draw_tiles_info()
+        #self.ot.draw_tiles_numbers(self.im, zoom)
 
-        im.save("globe.png")
-        im = self.fromMercator(im)
-        im = Image.open("globe.png")
+        self.im.save("globe.png")
+        self.im = self.fromMercator()
+        self.im = Image.open("globe.png")
         #self.save_2x_globe(im)
-        self.ovp = ovp
-        return im
+        #return im
 
-    def init_image_and_ovp(self, zoom):
-        ovp = overpass_countries()
-        ovp.init_tile_bboxes()
-        ot = osm_tiles()
-        im = ot.get_world_image(zoom)
-        self.draw = ImageDraw.Draw(im, "RGB")
-        return im, ovp
+    def init_image_and_ovp(self):
+        self.ovp = overpass_countries()
+        self.ovp.init_tile_bboxes()
+        self.ot = osm_tiles()
+        self.im = self.ot.get_world_image(self.zoom)
+        self.draw = ImageDraw.Draw(self.im, "RGB")
 
-    def fromMercator(self, im: Image) -> Image:
+    def fromMercator(self) -> Image:
         #draw = ImageDraw.Draw(im)
         # img_data = numpy.array(list(im.getdata()), numpy.int8)
-        w = im.width
-        h = im.height
+        w = self.im.width
+        h = self.im.height
         h2 = h // 2
         offset85 = int(h2 * (90.0 - 85.0511) / 90.0)
         #print("offset85=", offset85)
@@ -151,18 +150,18 @@ class globe_countries_i18n(video_3D_base):
             else:
                 dH = 2
 
-            pic_crop = im.crop((0, h2 - y, w, h2 - y + dH))
+            pic_crop = self.im.crop((0, h2 - y, w, h2 - y + dH))
             rezY = self.evaluateLat(y, h2)
             mercator.paste(pic_crop, (0, rezY + offset85))
 
-            pic_crop = im.crop((0, h2 + y, w, h2 + y + dH))
+            pic_crop = self.im.crop((0, h2 + y, w, h2 + y + dH))
             mercator.paste(pic_crop, (0, 2 * h2 - rezY - offset85))
 
         # зоны выше широты 85
-        northEtalon = pic_crop = im.crop((0, 0, w, 1))
+        northEtalon = pic_crop = self.im.crop((0, 0, w, 1))
         for i in range(0, offset85):
             mercator.paste(pic_crop, (0, i))
-        southEtalon = pic_crop = im.crop((0, h - 2, w, h - 1))
+        southEtalon = pic_crop = self.im.crop((0, h - 2, w, h - 1))
         for i in range(0, offset85):
             mercator.paste(pic_crop, (0, h - i))
 
@@ -185,9 +184,9 @@ class globe_countries_i18n(video_3D_base):
             print("y=", y, "rezY=", self.rezY, "h2=", h2, "teta=", self.teta, self.teta * 90 / self.pi_div_2, "angle=", self.angle, "angleTan=",
                   self.angleTan)
         return self.rezY
-    def save_2x_globe(self, im):
+    def save_2x_globe(self):
         # Convert the image to a NumPy array
-        original_array = np.array(im)
+        original_array = np.array(self.im)
 
         # Duplicate each pixel horizontally
         duplicated_array = np.repeat(original_array, 2, axis=1)
@@ -196,43 +195,43 @@ class globe_countries_i18n(video_3D_base):
         duplicated_image = Image.fromarray(duplicated_array)
         duplicated_image.save("globe_2x.png")
 
-    def get_country_data(self, ovp):
+    def get_country_data(self):
         ci_list = []
-        for ci in ovp.country_data:
-            if ci.country_code not in ovp.selected_countries and len(ovp.selected_countries) > 0:
+        for ci in self.ovp.country_data:
+            if ci.country_code not in self.ovp.selected_countries and len(self.ovp.selected_countries) > 0:
                 continue
-            if ci.country_code in ovp.loaded_country_codes:
+            if ci.country_code in self.ovp.loaded_country_codes:
                 continue
-            if ci.country_code in ovp.skip_countrues:
+            if ci.country_code in self.ovp.skip_countrues:
                 continue
             ci_list.append(ci)
         return ci_list
 
 
-    def get_country_colors(self, ovp):
-        num_colors = len(ovp.countries_df)
+    def get_country_colors(self):
+        num_colors = len(self.ovp.countries_df)
         colors = color_palette("hls", num_colors)
-        return {ovp.countries_df.iloc[i]["ISO3166-1"]: tuple(int(c*255) for c in color) for i, color in enumerate(colors)}
+        return {self.ovp.countries_df.iloc[i]["ISO3166-1"]: tuple(int(c*255) for c in color) for i, color in enumerate(colors)}
 
-    def draw_countries_v3(self, im, ovp, zoom):
+    def draw_countries_v3(self):
         self.no_polygons_countries = []
-        colors_d = self.get_country_colors(ovp)
+        colors_d = self.get_country_colors()
         i = 0
-        for ci in self.get_country_data(ovp):
+        for ci in self.get_country_data():
             i += 1
             name_border = f'{ci.country_code} country_border_coastline v8'
-            ovp.current_country_code = ci.country_code
-            polygons_geo_lat_lon = ovp.load_polygon_from_cache_v3(name_border, zoom)
-            if polygons_geo_lat_lon is None or ci.country_code in ovp.force_recalc_polygons:  # not in cache
-                ovp.load_country_border_data_v3(ci, i)
+            self.ovp.current_country_code = ci.country_code
+            polygons_geo_lat_lon = self.ovp.load_polygon_from_cache_v3(name_border, self.zoom)
+            if polygons_geo_lat_lon is None or ci.country_code in self.ovp.force_recalc_polygons:  # not in cache
+                self.ovp.load_country_border_data_v3(ci, i)
                 gb_osm = ci.country_border_coastline_osm_json
-                polygons_geo_lat_lon = ovp.scan_for_polygons_v3(gb_osm, zoom, name_border)
+                polygons_geo_lat_lon = self.ovp.scan_for_polygons_v3(gb_osm, name_border)
             if polygons_geo_lat_lon is not None:
-                texture_polygons = ovp.convert_polygon_lat_lon_to_texture_coords(polygons_geo_lat_lon, zoom)
+                texture_polygons = self.ovp.convert_polygon_lat_lon_to_texture_coords(polygons_geo_lat_lon, self.zoom)
                 #fi = polygon_fill_info(fill_color=(255,0,0,255) , border_color=(0,0,0,255))
                 country_color = self.get_country_color(ci, colors_d)
                 fi = polygon_fill_info(fill_color=country_color, border_color=None)
-                self.draw_polygons_on_image(im, texture_polygons, zoom, fi)
+                self.draw_polygons_on_image(texture_polygons, fi)
                 del polygons_geo_lat_lon
                 del texture_polygons
             else:
@@ -246,13 +245,20 @@ class globe_countries_i18n(video_3D_base):
         country_color = (country_color[0], country_color[1], country_color[2], 255)
         return country_color
 
-    def draw_land_polygons(self, im, ovp, zoom):
-        fi = polygon_fill_info(fill_color=self.default_land_color, border_color=None)
-        self.draw_polygons_on_image(im, [ovp.global_land_polygons_xy["outer"]], zoom, fi)
-        fi = polygon_fill_info(fill_color=self.water_color, border_color=None)
-        self.draw_polygons_on_image(im, [ovp.global_land_polygons_xy["inner"]], zoom, fi)
+    def draw_land_polygons(self):
+        outer_polygons = [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly]
+            for poly in self.ovp.global_land_polygons_xy["outer"]]
 
-    def draw_continent_polygons(self, im, ovp, zoom):
+        fi = polygon_fill_info(fill_color=self.default_land_color, border_color=None)
+        self.draw_polygons_on_image([outer_polygons], fi)
+
+        inner_polygons = [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly]
+            for poly in self.ovp.global_land_polygons_xy["inner"]]
+
+        fi = polygon_fill_info(fill_color=self.water_color, border_color=None)
+        self.draw_polygons_on_image([inner_polygons], fi)
+
+    def draw_continent_polygons(self):
         continent_colors = {
             "North America": (255, 165, 0),  # Orange
             "South America": (255, 192, 203),  # Pink
@@ -263,32 +269,32 @@ class globe_countries_i18n(video_3D_base):
             "Antarctica": (255, 255, 255)  # White
         }
         for continent in continent_colors.keys():
-            if continent not in ovp.global_continent_polygons_xy:
+            if continent not in self.ovp.global_continent_polygons_xy:
                 continue
             fi = polygon_fill_info(fill_color=continent_colors[continent], border_color=None)
-            self.draw_polygons_on_image(im, [ovp.global_continent_polygons_xy[continent]["outer"]], zoom, fi)
+            self.draw_polygons_on_image([self.ovp.global_continent_polygons_xy[continent]["outer"]], fi)
             fi = polygon_fill_info(fill_color=self.water_color, border_color=None)
-            self.draw_polygons_on_image(im, [ovp.global_continent_polygons_xy[continent]["inner"]], zoom, fi)
+            self.draw_polygons_on_image([self.ovp.global_continent_polygons_xy[continent]["inner"]], fi)
 
-    def draw_countries_land_borders(self, im, ovp, zoom):
+    def draw_countries_land_borders(self):
         # land_border_color = (64, 64, 64, 128)
         land_border_color = (255, 255, 255, 128)
         fi = polygon_fill_info(fill_color=None, border_color=land_border_color, width=3)
-        self.draw_polygons_on_image(im, [ovp.global_country_land_borders["outer"]], zoom, fi)
+        self.draw_polygons_on_image([self.ovp.global_country_land_borders["outer"]], fi)
 
-    def draw_water_v2(self, im, ovp, zoom):
+    def draw_water_v2(self):
         self.no_polygons_countries = []
         i = 0
-        for ci in self.get_country_data(ovp):
+        for ci in self.get_country_data(self.ovp):
             i += 1
             name_water = f'{ci.country_code} water v8'
             ci.load_country_lake_data()
-            ovp.current_country_code = ci.country_code
+            self.ovp.current_country_code = ci.country_code
             polygons_geo_lat_lon = ci.water_200000_polygons
             if polygons_geo_lat_lon is not None:
                 fi = polygon_fill_info(fill_color="blue", border_color=None)
-                texture_polygons = ovp.convert_polygon_lat_lon_to_texture_coords(polygons_geo_lat_lon, zoom)
-                self.draw_polygons_on_image(im, texture_polygons, zoom, fi)
+                texture_polygons = self.ovp.convert_polygon_lat_lon_to_texture_coords(polygons_geo_lat_lon, zoom)
+                self.draw_polygons_on_image(texture_polygons, fi)
                 del polygons_geo_lat_lon
                 del texture_polygons
 
@@ -315,7 +321,7 @@ class globe_countries_i18n(video_3D_base):
                     polygons = ovp.scan_for_polygons_v2(gb_osm, zoom, name_border)
             if polygons is not None:
                 fi = polygon_fill_info(fill_color=(255, 0, 0, 255), border_color=(0, 0, 0, 255))
-                self.draw_polygons_on_image(im, polygons, zoom, fi)
+                self.draw_polygons_on_image(polygons, fi)
                 del polygons
             else:
                 if country_code in self.no_polygons_countries:
@@ -327,7 +333,7 @@ class globe_countries_i18n(video_3D_base):
                 polygons = ovp.scan_for_polygons(gb_osm, zoom, name_water)
             if polygons is not None:
                 fi = polygon_fill_info(fill_color="blue", border_color=None)
-                self.draw_polygons_on_image(im, polygons, zoom, fi)
+                self.draw_polygons_on_image(polygons, fi)
                 del polygons
 
             ovp.loaded_country_codes.append(country_code)
@@ -424,10 +430,10 @@ class globe_countries_i18n(video_3D_base):
             ), axis=0)
         return a
 
-    def draw_polygons_on_image(self, im, polygons, zoom, fill_info):
-        n = 2 ** zoom
-        w = im.width
-        h = im.height
+    def draw_polygons_on_image(self, polygons, fill_info):
+        n = 2 ** self.zoom
+        w = self.im.width
+        h = self.im.height
         for poly in polygons[0]:
             xys = [((xy0[0] * w) / n, (xy0[1] * h / n)) for xy0 in poly]
             #minx = min([xy[0] for xy in xys])
@@ -436,7 +442,7 @@ class globe_countries_i18n(video_3D_base):
             #maxy = max([xy[1] for xy in xys])
             self.draw_polygon_on_image_core(fill_info, xys)
 
-        return im
+        #return self.im
 
     def draw_polygon_on_image_core(self, fill_info, xys):
         if fill_info.border_color is None:  # filled polygon without border
@@ -478,27 +484,27 @@ class globe_countries_i18n(video_3D_base):
             else:
                 pass
 
-    def draw_tiles_info(self, im, ovp, zoom):
+    def draw_tiles_info(self):
         self.countries_names = {}
-        font_size_1 = 36 if zoom >= 6 else 20
+        font_size_1 = 36 if self.zoom >= 6 else 20
         font_size_2 = (font_size_1 * 2) // 3
         font = ImageFont.truetype('fonts\\arial.ttf', font_size_1)
         font2 = ImageFont.truetype('fonts\\arial.ttf', font_size_2)
-        n_tiles = len(ovp.tile_bboxes)
-        for (xtile, ytile) in ovp.get_list_of_tiles():
-            bbox_info = ovp.tile_bboxes[ytile][xtile]
+        n_tiles = len(self.ovp.tile_bboxes)
+        for (xtile, ytile) in self.ovp.get_list_of_tiles():
+            bbox_info = self.ovp.tile_bboxes[ytile][xtile]
 
-            text_xy = (15 + (im.width * xtile) // n_tiles, 15 + (im.height * ytile) // n_tiles)
+            text_xy = (15 + (self.im.width * xtile) // n_tiles, 15 + (self.im.height * ytile) // n_tiles)
             self.draw.text(text_xy, f'{xtile} {ytile}', font=font, align="left", fill=(0, 0, 0))
 
             bbox_str = bbox_info.bbox_str_short()
-            text_xy = (15 + (im.width * xtile) // n_tiles, 45 + (im.height * ytile) // n_tiles)
+            text_xy = (15 + (self.im.width * xtile) // n_tiles, 45 + (self.im.height * ytile) // n_tiles)
             self.draw.text(text_xy, bbox_str, font=font, align="left", fill=(0, 0, 0))
 
-    def fill_all_world(self, im, ovp, zoom):
+    def fill_all_world(self):
         polygons = [[[[-180,-90],[-180,90],[180,90],[180,-90]]], []]
         fi = polygon_fill_info(fill_color=self.water_color, border_color=None)
-        self.draw_polygons_on_image(im, polygons, zoom, fi)
+        self.draw_polygons_on_image(polygons, fi)
 
 
 

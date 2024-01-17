@@ -99,10 +99,11 @@ class osm_tiles:
         total_image = Image.new(mode="RGB", size=(self.total_width, self.total_height))
         return total_image
 
-    def get_world_image_for_globe(self, z, bboxes, draw_tile_numbers = False):
-        fname = f'world_z_{z}.png'
-        n_tiles = pow(2, z)
-        self.tiles_grid = [[self.get_tile_image(z, x, y) for x in range(n_tiles)] for y in range(n_tiles)]
+    def get_world_image_for_globe(self, zoom, draw_tile_numbers=False):
+        self.zoom = zoom
+        fname = f'world_z_{self.zoom}.png'
+        n_tiles = pow(2, self.zoom)
+        self.tiles_grid = [[self.get_tile_image(self.zoom, x, y) for x in range(n_tiles)] for y in range(n_tiles)]
         self.total_width = self.tiles_grid[0][0].shape[0] * n_tiles
         self.total_height = self.total_width // 2 #self.tiles_grid[0][0].shape[1] * n_tiles
         total_image = Image.new(mode="RGB", size=(self.total_width, self.total_height))
@@ -113,9 +114,7 @@ class osm_tiles:
             x_running = 0
             for x in range(n_tiles):
                 im = self.tiles_grid[y][x]
-
-                bbox = bboxes[y][x]
-
+                #bbox = bboxes[y][x]
                 im1 = Image.fromarray(im[:, :, ::-1])
                 draw = ImageDraw.Draw(im1)
                 if draw_tile_numbers:
@@ -131,8 +130,8 @@ class osm_tiles:
         return total_image
 
 
-    def draw_tiles_numbers(self, z, total_image):
-        n_tiles = pow(2, z)
+    def draw_tiles_numbers(self, total_image, zoom):
+        n_tiles = 2 ** zoom
         font = ImageFont.truetype('fonts\\arial.ttf', 36)
         draw = ImageDraw.Draw(total_image)
 

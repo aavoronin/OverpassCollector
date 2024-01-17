@@ -223,7 +223,7 @@ class overpass_base:
             print(err)
         return [], []
 
-    def scan_for_polygons_v3(self, json_osm, zoom, data_name):
+    def scan_for_polygons_v3(self, json_osm, data_name):
         try:
             p_list2 = self.merge_polygons_v2(json_osm)
             fname = self.get_cache_file_name(data_name)
@@ -878,25 +878,33 @@ class overpass_base:
                 row_bboxes.append(map_box_info(bbox))
             self.tile_bboxes.append(row_bboxes)
 
-    def collect_polygons(self, geometry, polygons, zoom):
+    def collect_polygons(self, geometry, polygons):
         polygons["outer"] = []
         polygons["inner"] = []
         for _, row in geometry.iterrows():
             if isinstance(row["geometry"], MultiPolygon):
                 for polygon in row["geometry"].geoms:
                     polygons["outer"].append(
-                        [self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords])
+                        #[self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords]
+                        [(point[1], point[0]) for point in polygon.exterior.coords]
+                    )
 
                     for interior in polygon.interiors:
                         polygons["inner"].append(
-                            [self.deg2xy(point[1], point[0], zoom) for point in interior.coords])
+                            #[self.deg2xy(point[1], point[0], zoom) for point in interior.coords]
+                            [(point[1], point[0]) for point in interior.coords]
+                        )
             elif isinstance(row["geometry"], Polygon):
                 polygon = row["geometry"]
                 polygons["outer"].append(
-                    [self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords])
+                    #[self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords]
+                    [(point[1], point[0]) for point in polygon.exterior.coords]
+                )
                 for interior in polygon.interiors:
                     polygons["inner"].append(
-                        [self.deg2xy(point[1], point[0], zoom) for point in interior.coords])
+                        #[self.deg2xy(point[1], point[0], zoom) for point in interior.coords]
+                        [(point[1], point[0]) for point in interior.coords]
+                    )
             else:
                 print(2)
 
