@@ -27,6 +27,8 @@ class globe_countries_i18n(video_3D_base):
         self.speed = 1.0
         self.water_color = (147, 187, 226, 255)
         self.default_land_color = (255, 255, 255, 255)
+        self.draw = None
+
 
     def init_video_params(self):
         super().init_video_params()
@@ -80,11 +82,7 @@ class globe_countries_i18n(video_3D_base):
         self.texture = self.read_texture("image.png", flip_x=True)
 
     def get_globe_texture_image(self, zoom):
-        ovp = overpass_countries()
-        ovp.init_tile_bboxes()
-
-        ot = osm_tiles()
-        im = ot.get_world_image(zoom)
+        im, ovp = self.init_image_and_ovp(zoom)
         #im = ot.get_world_image_for_globe(zoom, ovp.tile_bboxes)
 
         ovp.load()
@@ -119,6 +117,14 @@ class globe_countries_i18n(video_3D_base):
         #self.save_2x_globe(im)
         self.ovp = ovp
         return im
+
+    def init_image_and_ovp(self, zoom):
+        ovp = overpass_countries()
+        ovp.init_tile_bboxes()
+        ot = osm_tiles()
+        im = ot.get_world_image(zoom)
+        self.draw = ImageDraw.Draw(im, "RGB")
+        return im, ovp
 
     def fromMercator(self, im: Image) -> Image:
         #draw = ImageDraw.Draw(im)
@@ -428,16 +434,49 @@ class globe_countries_i18n(video_3D_base):
             #miny = min([xy[1] for xy in xys])
             #maxx = max([xy[0] for xy in xys])
             #maxy = max([xy[1] for xy in xys])
-            draw = ImageDraw.Draw(im, "RGB")
-            if fill_info.border_color is None: # filled polygon without border
+            self.draw_polygon_on_image_core(fill_info, xys)
+
+        return im
+
+    def draw_polygon_on_image_core(self, fill_info, xys):
+        if fill_info.border_color is None:  # filled polygon without border
+            self.draw.polygon(xy=xys, fill=fill_info.fill_color)
+        elif fill_info.fill_color is not None:  # filled polygon with border
+            self.draw.polygon(xy=xys, fill=fill_info.fill_color, outline=fill_info.border_color)
+        else:
+            pass
+            # draw.polygon(xy=xys, fill=None, outline=fill_info.border_color, width = 3)
+
+    def apply_masked_drawing(self, mask, stamp):
+
+        # Access the underlying image
+        image = self.draw._image
+
+        # Convert the image and the mask to numpy arrays
+        image_np = np.array(image)
+        #mask_np = np.array(mask)
+        #stamp_np = np.array(stamp)
+
+        # Perform bitwise AND operation between the image and the mask
+        masked_image_np = np.bitwise_and(image_np, mask)
+
+        # Perform bitwise OR operation between the result and the stamp
+        result_np = np.bitwise_or(masked_image_np, stamp)
+
+        # Convert the result back to a PIL image
+        # Create a new ImageDraw object with the updated image
+        self.draw = ImageDraw.Draw(Image.fromarray(result_np))
+
+    def draw_polygon_on_2images_core(self, draws, fill_infos, xys):
+        for i in range(len(draws)):
+            draw = draws[i]
+            fill_info = fill_infos[i]
+            if fill_info.border_color is None:  # filled polygon without border
                 draw.polygon(xy=xys, fill=fill_info.fill_color)
-            elif fill_info.fill_color is not None: # filled polygon with border
+            elif fill_info.fill_color is not None:  # filled polygon with border
                 draw.polygon(xy=xys, fill=fill_info.fill_color, outline=fill_info.border_color)
             else:
                 pass
-                #draw.polygon(xy=xys, fill=None, outline=fill_info.border_color, width = 3)
-
-        return im
 
     def draw_tiles_info(self, im, ovp, zoom):
         self.countries_names = {}
@@ -445,17 +484,16 @@ class globe_countries_i18n(video_3D_base):
         font_size_2 = (font_size_1 * 2) // 3
         font = ImageFont.truetype('fonts\\arial.ttf', font_size_1)
         font2 = ImageFont.truetype('fonts\\arial.ttf', font_size_2)
-        draw = ImageDraw.Draw(im)
         n_tiles = len(ovp.tile_bboxes)
         for (xtile, ytile) in ovp.get_list_of_tiles():
             bbox_info = ovp.tile_bboxes[ytile][xtile]
 
             text_xy = (15 + (im.width * xtile) // n_tiles, 15 + (im.height * ytile) // n_tiles)
-            draw.text(text_xy, f'{xtile} {ytile}', font=font, align="left", fill=(0, 0, 0))
+            self.draw.text(text_xy, f'{xtile} {ytile}', font=font, align="left", fill=(0, 0, 0))
 
             bbox_str = bbox_info.bbox_str_short()
             text_xy = (15 + (im.width * xtile) // n_tiles, 45 + (im.height * ytile) // n_tiles)
-            draw.text(text_xy, bbox_str, font=font, align="left", fill=(0, 0, 0))
+            self.draw.text(text_xy, bbox_str, font=font, align="left", fill=(0, 0, 0))
 
     def fill_all_world(self, im, ovp, zoom):
         polygons = [[[[-180,-90],[-180,90],[180,90],[180,-90]]], []]
