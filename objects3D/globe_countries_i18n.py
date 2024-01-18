@@ -42,7 +42,7 @@ class globe_countries_i18n(video_3D_base):
         self.first_frames_delay = 0
 
     def init_scene(self):
-        zoom = 6
+        zoom = 4
         factor = 1
         #self.ball_3D = ball_3D(factor * (2 ** tiles_power), factor * (2 ** tiles_power), 3)
         #self.ball_3D.create_arrays()
@@ -246,17 +246,17 @@ class globe_countries_i18n(video_3D_base):
         return country_color
 
     def draw_land_polygons(self):
-        outer_polygons = [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly]
-            for poly in self.ovp.global_land_polygons_xy["outer"]]
-
+        #outer_polygons = [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly]
+        #    for poly in self.ovp.global_land_polygons_xy["outer"]]
         fi = polygon_fill_info(fill_color=self.default_land_color, border_color=None)
-        self.draw_polygons_on_image([outer_polygons], fi)
+        self.draw_polygons_on_image([self.convert_polygons_from_lat_lon(
+            self.ovp.global_land_polygons_xy["outer"])], fi)
 
-        inner_polygons = [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly]
-            for poly in self.ovp.global_land_polygons_xy["inner"]]
-
+        #inner_polygons = [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly]
+        #    for poly in self.ovp.global_land_polygons_xy["inner"]]
         fi = polygon_fill_info(fill_color=self.water_color, border_color=None)
-        self.draw_polygons_on_image([inner_polygons], fi)
+        self.draw_polygons_on_image([self.convert_polygons_from_lat_lon(
+            self.ovp.global_land_polygons_xy["inner"])], fi)
 
     def draw_continent_polygons(self):
         continent_colors = {
@@ -272,9 +272,11 @@ class globe_countries_i18n(video_3D_base):
             if continent not in self.ovp.global_continent_polygons_xy:
                 continue
             fi = polygon_fill_info(fill_color=continent_colors[continent], border_color=None)
-            self.draw_polygons_on_image([self.ovp.global_continent_polygons_xy[continent]["outer"]], fi)
+            self.draw_polygons_on_image([self.convert_polygons_from_lat_lon(
+                self.ovp.global_continent_polygons_xy[continent]["outer"])], fi)
             fi = polygon_fill_info(fill_color=self.water_color, border_color=None)
-            self.draw_polygons_on_image([self.ovp.global_continent_polygons_xy[continent]["inner"]], fi)
+            self.draw_polygons_on_image([self.convert_polygons_from_lat_lon(
+                self.ovp.global_continent_polygons_xy[continent]["inner"])], fi)
 
     def draw_countries_land_borders(self):
         # land_border_color = (64, 64, 64, 128)
@@ -505,6 +507,10 @@ class globe_countries_i18n(video_3D_base):
         polygons = [[[[-180,-90],[-180,90],[180,90],[180,-90]]], []]
         fi = polygon_fill_info(fill_color=self.water_color, border_color=None)
         self.draw_polygons_on_image(polygons, fi)
+
+    def convert_polygons_from_lat_lon(self, polygons_lat_lon):
+        return [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly] for poly in polygons_lat_lon]
+
 
 
 

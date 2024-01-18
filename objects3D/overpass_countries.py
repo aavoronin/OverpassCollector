@@ -401,34 +401,34 @@ class overpass_countries(overpass_base):
         print(f'{len(countries)} countries')
 
 
-    def get_global_land_polygons(self):
+    def get_global_land_polygons(self, ovp):
         folder = "c:/Data/natural_earth/ne_10m_land/"
         url = ''
         file = "ne_10m_land.shp"
         start_time = time.time()
 
-        if not os.path.exists(os.path.join(folder, file)):
-            self.download_natural_earth_dataset(folder, file, url)
+        cache_name = f"lang ne-10m"
+        md5 = hashlib.md5(cache_name.encode('utf-8')).hexdigest()
+        fname = f"{self.cache_path}\\{str(md5)}.zlib"
+
+        self.global_continent_polygons_xy = ovp.try_load_from_cache(fname)
+        if self.global_continent_polygons_xy is not None:
+            return
 
         gdf = gpd.read_file(os.path.join(folder, file))
         geometry = gdf
         self.global_land_polygons_xy = land_polygons = {}
         self.collect_polygons(geometry, land_polygons)
         #[self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords]
-
-
+        ovp.save_to_cache(fname, self.global_continent_polygons_xy)
 
         end_time = time.time()
         print(f'land polygons ({end_time-start_time})')
-
 
     def download_natural_earth_dataset(self, folder, file, url):
         if not os.path.exists(folder):
             os.makedirs(folder)
         response = requests.get(url)
-        #z = zipfile.ZipFile(BytesIO(response.content))
-        #z.extractall(path=folder)
-
         with open(os.path.join(folder, file), 'wb') as file:
             file.write(response.content)
 
@@ -448,7 +448,7 @@ class overpass_countries(overpass_base):
         print(f'country polygons ({end_time-start_time})')
 
     def get_continents_borders(self, ovp):
-        cache_name = "continents_borders ne-10m"
+        cache_name = f"continents_borders ne-10m"
         md5 = hashlib.md5(cache_name.encode('utf-8')).hexdigest()
         fname = f"{self.cache_path}\\{str(md5)}.zlib"
 
@@ -478,10 +478,10 @@ class overpass_countries(overpass_base):
             print(f"geometry for {continent}")
             continent_polygons = {}
             self.global_continent_polygons_xy[continent] = continent_polygons
-            self.collect_polygons(continent_geometry, continent_polygons, self.zoom)
+            self.collect_polygons(continent_geometry, continent_polygons)
 
-        end_time = time.time()
         ovp.save_to_cache(fname, self.global_continent_polygons_xy)
+        end_time = time.time()
         print(f'continent polygons ({end_time-start_time})')
 
     def get_europe_geom(self, gdf_countries, gdf_provinces):

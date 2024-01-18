@@ -29,7 +29,7 @@ class globe_continents(globe_countries_i18n):
         #ovp.get_countries_bounding_boxes()
         lang = "en"
         self.large_labels_base_size = self.im.height // 128
-        self.ovp.get_global_land_polygons()
+        self.ovp.get_global_land_polygons(self.ovp)
         self.ovp.get_continents_borders(self.ovp)
         self.ovp.get_country_borders()
         self.ovp.get_continent_labels(lang, self.large_labels_base_size)
@@ -46,7 +46,7 @@ class globe_continents(globe_countries_i18n):
         self.draw_ocean_labels(lang)
         self.im = self.draw._image
         #self.im = self.draw._image
-        #self.draw_countries_land_borders(im, ovp, zoom)
+        self.draw_countries_land_borders()
 
         self.im.save("globe.png")
         self.fromMercator()
@@ -96,12 +96,10 @@ class globe_continents(globe_countries_i18n):
 
         for cont_i in label_info:
             # self.draw_label(color, cont_i, font, h, lang, n, w)
-            self.draw_label_polygons(color, cont_i, font, font2, h, lang, n, w,
+            self.draw_label_polygons(cont_i, font2, w, h, n, lang,
                                      im_mask_img_draw, im_stamp_img_draw, fi_letter_color, fi_black, fi_white)
 
-        #im_mask = np.array(im_mask_img_draw._image)
         #im_mask_img_draw._image.save("mask.png")
-        #im_stamp = np.array(im_stamp_img_draw._image)
         #im_stamp_img_draw._image.save("stamp.png")
 
         self.draw = ImageDraw.Draw(
@@ -109,23 +107,20 @@ class globe_continents(globe_countries_i18n):
                             np.array(im_mask_img_draw._image) |
                             np.array(im_stamp_img_draw._image)))
 
-        self.draw._image.save("masked.png")
+        #self.draw._image.save("masked.png")
         self.apply_masked_drawing(im_mask, im_stamp)
-        #im &= im_mask
-        #im |= im_stamp
 
-
-    def draw_label_polygons(self, color, cont_i, font, font2, h, lang, n, w,
+    def draw_label_polygons(self, cont_i, font2, w, h, n, lang,
                             im_mask_img_draw, im_stamp_img_draw, fi_letter_color, fi_black, fi_white):
         xy0 = self.ovp.deg2xy(cont_i['lat'], cont_i['lon'], self.zoom)
         lat = cont_i["lat"]
         lon = cont_i["lon"]
         s = cont_i["name"]
         font_h = cont_i["size"]
-        n = 2 ** self.zoom
-        bbox = self.draw.multiline_textbbox((0.0, 0.0), s, font=font, spacing=0, language=lang)
+        #n = 2 ** self.zoom
+        #bbox = self.draw.multiline_textbbox((0.0, 0.0), s, font=font, spacing=0, language=lang)
         bbox2 = self.draw.multiline_textbbox((0.0, 0.0), s, font=font2, spacing=0, language=lang)
-        ww, hh = int(bbox[2] - bbox[0] + 1), int(bbox[3] - bbox[1] + 1)
+        #ww, hh = int(bbox[2] - bbox[0] + 1), int(bbox[3] - bbox[1] + 1)
         factor = 2
         w2, h2 = factor * int(bbox2[2] - bbox2[0] + 1), factor * int(bbox2[3] - bbox2[1] + 1)
 
@@ -169,7 +164,7 @@ class globe_continents(globe_countries_i18n):
         bw = t_bbox.bounds[2] - t_bbox.bounds[0]
         bh = t_bbox.bounds[3] - t_bbox.bounds[1]
         bc = ((t_bbox.bounds[2] + t_bbox.bounds[0]) // 2, (t_bbox.bounds[3] + t_bbox.bounds[1]) // 2)
-        xy = (int((xy0[0] * w) / n - (bbox[2] - bbox[0] + 1) / 2), int((xy0[1] * h / n) - (bbox[3] - bbox[1] + 1) / 2))
+        #xy = (int((xy0[0] * w) / n - (bbox[2] - bbox[0] + 1) / 2), int((xy0[1] * h / n) - (bbox[3] - bbox[1] + 1) / 2))
         xy2 = (int((xy0[0] * w) / n), int((xy0[1] * h / n)))
         globe_text_outer_polygon = [
             [
@@ -195,9 +190,6 @@ class globe_continents(globe_countries_i18n):
             (min([p[0] for p in poly]), min([p[1] for p in poly]), max([p[0] for p in poly]), max([p[1] for p in poly]))
             for poly in globe_text_outer_polygon
         ]
-
-        text_polygons_bbox = (min([m[0] for m in min_maxes]), min([m[1] for m in min_maxes]),
-                              max([m[0] for m in min_maxes]), max([m[1] for m in min_maxes]))
 
         for poly in globe_text_outer_polygon:
             min_x = min([p[0] for p in poly])
@@ -227,12 +219,6 @@ class globe_continents(globe_countries_i18n):
                 poly2 = [(p[0] - w, p[1]) for p in poly]
                 #self.draw_polygon_on_image_core(fi, poly2)
                 self.draw_polygon_on_2images_core([im_mask_img_draw, im_stamp_img_draw], [fi_white, fi_black], poly2)
-
-        #self.draw.multiline_text(xy, s, font=font, fill=color, spacing=0, language=lang)
-        #if xy[0] + (bbox[2] - bbox[0] + 1) >= w:
-        #    self.draw.multiline_text((xy[0] - w, xy[1]), s, font=font, fill=color, spacing=0, language=lang)
-        #if xy[0] < 0:
-        #    self.draw.multiline_text((xy[0] + w, xy[1]), s, font=font, fill=color, spacing=0, language=lang)
 
     def draw_label(self, color, cont_i, font, h, lang, n, w):
         xy0 = cont_i["xy"]
