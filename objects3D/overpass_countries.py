@@ -25,8 +25,9 @@ from objects3D.polygon_fill_info import polygon_fill_info
 # https://wiki.openstreetmap.org/wiki/RU:Map_Features
 
 class overpass_countries(overpass_base):
-    def __init__(self):
+    def __init__(self, lang="en"):
         super().__init__()
+        self.lang = lang
         self.country_data = []
         self.country_border_coastline_osm_json = {}
         self.water_osm_json = {}
@@ -563,37 +564,33 @@ class overpass_countries(overpass_base):
         africa = pd.concat([africa_countries, selected_provinces_Egypt])
         return africa
 
-    def get_continent_labels(self, lang, label_size):
+    def get_continent_labels(self, label_size):
         query = '''[out:json];node["place"="continent"];out;'''
         data = self.exec_query_json(query, "out", build=False)
-        self.get_labels_info(data, self.continent_info, lang)
+        self.get_labels_info(data, self.continent_info, self.lang)
         self.continent_info = [{**info, "size": label_size} for info in self.continent_info]
+        europe = next(filter(lambda o: o["name_en"].startswith("Europe"), self.continent_info), None)
+        europe['lon'] += 20.0
+        europe['size'] *= 2
         asia = next(filter(lambda o: o["name_en"].startswith("Asia"), self.continent_info), None)
+        asia['lat'] -= 20.0
         asia['size'] *= 2.5
         n_america = next(filter(lambda o: o["name_en"].startswith("North"), self.continent_info), None)
         n_america['lon'] += 15.0
         n_america['lat'] -= 10.0
-        #n_america['xy'] = self.deg2xy(n_america['lat'], n_america['lon'], self.zoom)
-        europe = next(filter(lambda o: o["name_en"].startswith("Europe"), self.continent_info), None)
-        europe['lon'] += 20.0
-        #europe['xy'] = self.deg2xy(europe['lat'], europe['lon'], self.zoom)
-        europe['size'] *= 2
         s_america = next(filter(lambda o: o["name_en"].startswith("South"), self.continent_info), None)
         s_america['lat'] += 15.0
         s_america['lon'] += 10.0
-        #s_america['xy'] = self.deg2xy(s_america['lat'], s_america['lon'], self.zoom)
         antarctica = next(filter(lambda o: o["name_en"].startswith("Antarctica"), self.continent_info), None)
         antarctica['lon'] += 50.0
-        #antarctica['xy'] = self.deg2xy(antarctica['lat'], antarctica['lon'], self.zoom)
 
-    def get_ocean_labels(self, lang, label_size):
+    def get_ocean_labels(self, label_size):
         query = '''[out:json];node["place"="ocean"];out;'''
         data = self.exec_query_json(query, "out", build=False)
-        self.get_labels_info(data, self.ocean_info, lang)
+        self.get_labels_info(data, self.ocean_info, self.lang)
         self.ocean_info = [{**info, "size": label_size} for info in self.ocean_info]
         arctic = next(filter(lambda o: o["name_en"].startswith("Arctic"), self.ocean_info), None)
         arctic['lat'] = 75.0
-        #arctic['xy'] = self.deg2xy(arctic['lat'], arctic['lon'], self.zoom)
         pacific = next(filter(lambda o: o["name_en"].startswith("Pacific"), self.ocean_info), None)
         pacific['size'] *= 2.5
 
@@ -608,7 +605,6 @@ class overpass_countries(overpass_base):
                 name = tags[name_tag_lang] if name_tag_lang in tags else tags[name_tag_en] \
                     if name_tag_en in tags else tags["name"] if "name" in tags else '-'
                 name_en = tags[name_tag_en] if name_tag_en in tags else tags["name"] if "name" in tags else '-'
-                #xy = self.deg2xy(lat, lon, self.zoom)
                 info.append({"lat": lat, "lon": lon, "name": name, "name_en": name_en})
             except KeyError:
                 continue

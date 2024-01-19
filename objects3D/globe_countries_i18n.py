@@ -28,7 +28,8 @@ class globe_countries_i18n(video_3D_base):
         self.water_color = (147, 187, 226, 255)
         self.default_land_color = (255, 255, 255, 255)
         self.draw = None
-
+        self.lang = "en"
+        self.zoom = 4
 
     def init_video_params(self):
         super().init_video_params()
@@ -42,7 +43,6 @@ class globe_countries_i18n(video_3D_base):
         self.first_frames_delay = 0
 
     def init_scene(self):
-        zoom = 4
         factor = 1
         #self.ball_3D = ball_3D(factor * (2 ** tiles_power), factor * (2 ** tiles_power), 3)
         #self.ball_3D.create_arrays()
@@ -51,7 +51,7 @@ class globe_countries_i18n(video_3D_base):
         screen = pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
         self.clock = pygame.time.Clock()
 
-        self.create_globe_texture(zoom)
+        self.create_globe_texture(self.zoom)
         self.sphere_d = int(self.height * 0.8)
 
         pygame.display.gl_set_attribute(pygame.GL_DOUBLEBUFFER, 1)
@@ -111,15 +111,18 @@ class globe_countries_i18n(video_3D_base):
         #self.draw_water_v2()
         #self.draw_tiles_info()
         #self.ot.draw_tiles_numbers(self.im, zoom)
+        self.post_process_image()
 
+    def post_process_image(self):
+        self.im = self.draw._image
+        # self.im = self.draw._image
+        # self.draw_countries_land_borders()
         self.im.save("globe.png")
-        self.im = self.fromMercator()
+        self.fromMercator()
         self.im = Image.open("globe.png")
-        #self.save_2x_globe(im)
-        #return im
 
     def init_image_and_ovp(self):
-        self.ovp = overpass_countries()
+        self.ovp = overpass_countries(self.lang)
         self.ovp.init_tile_bboxes()
         self.ot = osm_tiles()
         self.im = self.ot.get_world_image(self.zoom)
@@ -249,8 +252,8 @@ class globe_countries_i18n(video_3D_base):
         #outer_polygons = [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly]
         #    for poly in self.ovp.global_land_polygons_xy["outer"]]
         fi = polygon_fill_info(fill_color=self.default_land_color, border_color=None)
-        self.draw_polygons_on_image([self.convert_polygons_from_lat_lon(
-            self.ovp.global_land_polygons_xy["outer"])], fi)
+        p = [self.convert_polygons_from_lat_lon(self.ovp.global_land_polygons_xy["outer"])]
+        self.draw_polygons_on_image(p, fi)
 
         #inner_polygons = [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly]
         #    for poly in self.ovp.global_land_polygons_xy["inner"]]
@@ -504,12 +507,15 @@ class globe_countries_i18n(video_3D_base):
             self.draw.text(text_xy, bbox_str, font=font, align="left", fill=(0, 0, 0))
 
     def fill_all_world(self):
-        polygons = [[[[-180,-90],[-180,90],[180,90],[180,-90]]], []]
+        polygons = [[[-180,-90],[-180,90],[180,90],[180,-90]]]
+        polygons = [[(p[1], p[0]) for p in polygons[0]]]
         fi = polygon_fill_info(fill_color=self.water_color, border_color=None)
-        self.draw_polygons_on_image(polygons, fi)
+        p = self.convert_polygons_from_lat_lon(polygons)
+        self.draw_polygons_on_image([p], fi)
+
 
     def convert_polygons_from_lat_lon(self, polygons_lat_lon):
-        return [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly] for poly in polygons_lat_lon]
+        return [[self.ovp.deg2xy(point[1], point[0], self.zoom) for point in poly] for poly in polygons_lat_lon]
 
 
 

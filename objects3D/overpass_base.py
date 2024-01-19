@@ -776,6 +776,48 @@ class overpass_base:
         y = (1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n
         return (x, y)
 
+    def deg_2_texture_xy(self, lat_deg, lon_deg, w, h):
+
+        # Normalize lat and lon to [0, 1] range
+        x = (lon_deg + 180) / 360
+        y = (90 - lat_deg) / 180
+
+        # Scale to image size
+        x = int(w * x)
+        y = int(h * y)
+
+        # Shift to center of image
+        #x = (w - 1) / 2 + x
+        #y = (h - 1) / 2 + y
+
+        return x, y
+
+        """
+        # Radius of the earth
+        R = w / (2.0 * math.pi)
+
+        # False easting
+        FE = 180.0
+
+        # Convert lat and lon to radians
+        lon_rad = math.radians(lon_deg + FE)
+
+        # Calculate x and y pixel coordinates
+        x = lon_rad * R
+        if lat_deg < -90.0 + 0.00001:
+            y = 0
+        elif lat_deg > +90.0 - 0.00001:
+            y = h - 1
+        else:
+            lat_rad = math.radians(lat_deg)
+            y = R * math.log(math.tan(math.pi / 4.0 + lat_rad / 2.0))
+
+        # Adjust y coordinate to fit within image height
+        y = h / 2.0 - y
+
+        return int(x), int(y)
+        """
+
     def num2deg(self, xtile, ytile, zoom):
         n = 2.0 ** zoom
         lon_deg = xtile / n * 360.0 - 180.0
