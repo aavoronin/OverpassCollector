@@ -40,11 +40,11 @@ class globe_continents(globe_countries_i18n):
         self.ovp.selected_countries = ["KZ", "UG"]
         # ovp.selected_countries = []
         # ovp.get_countries_bounding_boxes()
-        self.large_labels_base_size = self.im.height // 128
+        self.large_labels_base_size = self.im.height // 64
 
     def draw_continent_labels(self):
         color = (0, 0, 0)
-        font_size = self.im.height // 128
+        font_size = self.im.height // 64
         font_size2 = 256
         font = ImageFont.truetype('fonts\\TimesNewRomanRegular.ttf', font_size)
         font2 = ImageFont.truetype('fonts\\TimesNewRomanRegular.ttf', font_size2)
@@ -161,20 +161,12 @@ class globe_continents(globe_countries_i18n):
         globe_text_outer_polygon = [
             [
                 self.convert_text_polygon_point(p, bc, font_h, bh, lat, xy2)
-                # (
-                #    ((p[0] - bc[0]) * font_h / bh / abs(math.cos(lat * math.pi / 180.0))) + xy2[0],
-                #    ((p[1] - bc[1]) * font_h / bh / abs(math.cos(lat * math.pi / 180.0))) + xy2[1]
-                # )
                 for p in poly.exterior.coords
             ]
             for poly in outer_polygons]
         globe_text_inner_polygons = [
             [
                 self.convert_text_polygon_point(p, bc, font_h, bh, lat, xy2)
-                # (
-                #    ((p[0] - bc[0]) * font_h / bh / abs(math.cos(lat * math.pi / 180.0))) + xy2[0],
-                #    ((p[1] - bc[1]) * font_h / bh / abs(math.cos(lat * math.pi / 180.0))) + xy2[1]
-                # )
                 for p in poly.exterior.coords
             ]
             for poly in inner_polygons]
