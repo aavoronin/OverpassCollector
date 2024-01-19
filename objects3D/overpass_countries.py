@@ -411,17 +411,14 @@ class overpass_countries(overpass_base):
         cache_name = f"lang ne-10m"
         md5 = hashlib.md5(cache_name.encode('utf-8')).hexdigest()
         fname = f"{self.cache_path}\\{str(md5)}.zlib"
-
-        self.global_continent_polygons_xy = ovp.try_load_from_cache(fname)
-        if self.global_continent_polygons_xy is not None:
-            return
-
-        gdf = gpd.read_file(os.path.join(folder, file))
-        geometry = gdf
-        self.global_land_polygons_xy = land_polygons = {}
-        self.collect_polygons(geometry, land_polygons)
-        #[self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords]
-        ovp.save_to_cache(fname, self.global_continent_polygons_xy)
+        self.global_continent_polygons_xy = self.try_load_from_cache(fname)
+        if self.global_continent_polygons_xy is None:
+            gdf = gpd.read_file(os.path.join(folder, file))
+            geometry = gdf
+            self.global_land_polygons_xy = land_polygons = {}
+            self.collect_polygons(geometry, land_polygons)
+            #[self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords]
+            self.save_to_cache(fname, self.global_continent_polygons_xy)
 
         end_time = time.time()
         print(f'land polygons ({end_time-start_time})')
@@ -434,54 +431,69 @@ class overpass_countries(overpass_base):
             file.write(response.content)
 
     def get_country_borders(self):
-        folder = "c:/Data/natural_earth/ne-10m/"
         start_time = time.time()
-        # 'https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip'
-        file_name_gdf_countries = "ne_10m_admin_0_countries.shp"
-        gdf_countries = gpd.read_file(os.path.join(folder, file_name_gdf_countries))
+        cache_name = f"country_borders ne-10m"
+        md5 = hashlib.md5(cache_name.encode('utf-8')).hexdigest()
+        fname = f"{self.cache_path}\\{str(md5)}.zlib"
+        self.global_country_land_borders = self.try_load_from_cache(fname)
+        if self.global_country_land_borders is None:
+            folder = "c:/Data/natural_earth/ne-10m/"
+            # 'https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip'
+            file_name_gdf_countries = "ne_10m_admin_0_countries.shp"
+            gdf_countries = gpd.read_file(os.path.join(folder, file_name_gdf_countries))
 
-        geometry = gdf_countries
-        country_polygons = {}
-        self.global_country_land_borders = country_polygons
-        self.collect_polygons(geometry, country_polygons)
+            geometry = gdf_countries
+            country_polygons = {}
+            self.global_country_land_borders = country_polygons
+            self.collect_polygons(geometry, country_polygons)
+            self.save_to_cache(fname, self.global_continent_polygons_xy)
 
         end_time = time.time()
         print(f'country polygons ({end_time-start_time})')
 
     def get_continents_borders(self, ovp):
-        cache_name = f"continents_borders ne-10m"
-        md5 = hashlib.md5(cache_name.encode('utf-8')).hexdigest()
-        fname = f"{self.cache_path}\\{str(md5)}.zlib"
-
-        self.global_continent_polygons_xy = ovp.try_load_from_cache(fname)
-        if self.global_continent_polygons_xy is not None:
-            return
         start_time = time.time()
-        folder = "c:/Data/natural_earth/ne-10m/"
-        # 'https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip'
-        file_name_gdf_countries = "ne_10m_admin_0_countries.shp"
-        file_name_gdf_states_province = "ne_10m_admin_1_states_provinces.shp"
-        gdf_countries = gpd.read_file(os.path.join(folder, file_name_gdf_countries))
-        gdf_provinces = gpd.read_file(os.path.join(folder, file_name_gdf_states_province))
+        cache_name = f"continents_borders ne-10m"
+        fname = self.get_cache_file_name(cache_name)
+        self.global_continent_polygons_xy = self.try_load_from_cache(fname)
+        if self.global_continent_polygons_xy is None:
+            folder = "c:/Data/natural_earth/ne-10m/"
+            # 'https://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip'
+            file_name_gdf_countries = "ne_10m_admin_0_countries.shp"
+            file_name_gdf_states_province = "ne_10m_admin_1_states_provinces.shp"
+            gdf_countries = gpd.read_file(os.path.join(folder, file_name_gdf_countries))
+            gdf_provinces = gpd.read_file(os.path.join(folder, file_name_gdf_states_province))
 
-        self.global_continent_polygons_xy = dict()
-        for continent in gdf_countries["CONTINENT"].unique():
-            if continent == 'Europe':
-                continent_geometry = self.get_europe_geom(gdf_countries, gdf_provinces)
-            elif continent == 'Asia':
-                continent_geometry = self.get_asia_geom(gdf_countries, gdf_provinces)
-            elif continent == 'Africa':
-                continent_geometry = self.get_africa_geom(gdf_countries, gdf_provinces)
-            elif continent == 'South America':
-                continent_geometry = self.get_south_america_geom(gdf_countries, gdf_provinces)
-            else:
-                continent_geometry = gdf_countries[gdf_countries['CONTINENT'] == continent]
-            print(f"geometry for {continent}")
-            continent_polygons = {}
-            self.global_continent_polygons_xy[continent] = continent_polygons
-            self.collect_polygons(continent_geometry, continent_polygons)
+            self.global_continent_polygons_xy = dict()
+            for continent in gdf_countries["CONTINENT"].unique():
+                if continent == 'Europe':
+                    continent_geometry = self.get_europe_geom(gdf_countries, gdf_provinces)
+                elif continent == 'Asia':
+                    continent_geometry = self.get_asia_geom(gdf_countries, gdf_provinces)
+                elif continent == 'Africa':
+                    continent_geometry = self.get_africa_geom(gdf_countries, gdf_provinces)
+                elif continent == 'South America':
+                    continent_geometry = self.get_south_america_geom(gdf_countries, gdf_provinces)
+                else:
+                    continent_geometry = gdf_countries[gdf_countries['CONTINENT'] == continent]
+                print(f"geometry for {continent}")
+                continent_polygons = {}
+                self.global_continent_polygons_xy[continent] = continent_polygons
+                self.collect_polygons(continent_geometry, continent_polygons)
 
-        ovp.save_to_cache(fname, self.global_continent_polygons_xy)
+            self.save_to_cache(fname, self.global_continent_polygons_xy)
+
+        cache_name2 = f"continents_bboxes ne-10m"
+        fname2 = self.get_cache_file_name(cache_name2)
+        self.global_continent_bboxes = self.try_load_from_cache(fname2)
+        if self.global_continent_bboxes is None:
+            self.global_continent_bboxes = dict()
+            for continent, continent_geometry in self.global_continent_polygons_xy.items():
+                self.global_continent_bboxes[continent] = self.get_lat_lon_bbox(continent_geometry["outer"])
+                #print(continent, self.global_continent_bboxes[continent])
+            for continent, continent_geometry in self.global_continent_polygons_xy.items():
+                print(f'"{continent}",')
+            #self.save_to_cache(fname2, self.global_continent_bboxes)
         end_time = time.time()
         print(f'continent polygons ({end_time-start_time})')
 
@@ -608,3 +620,49 @@ class overpass_countries(overpass_base):
                 info.append({"lat": lat, "lon": lon, "name": name, "name_en": name_en})
             except KeyError:
                 continue
+
+    def get_lat_lon_bbox(self, lat_lon_geom):
+        d = 0.0001
+        min_maxes = [
+            (min([p[0] for p in poly]), min([p[1] for p in poly]), max([p[0] for p in poly]), max([p[1] for p in poly]))
+            for poly in lat_lon_geom
+        ]
+        min_maxes0 = [min([m[0] for m in min_maxes]), min([m[1] for m in min_maxes]),
+                      max([m[2] for m in min_maxes]), max([m[3] for m in min_maxes])]
+
+        #if min_maxes0[3] - min_maxes0[1] > 350:
+        #    bbox = {
+        #        "bbox": [min_maxes0[0], -180, min_maxes0[2], 180.0],
+        #        "width": 360.0,
+        #        "height": (min_maxes0[2] - min_maxes0[0]),
+        #        "center_lat": (min_maxes0[0] + min_maxes0[2]) / 2.0,
+        #        "center_lon": 0.0,
+        #    }
+        #el
+        if min_maxes0[3] - min_maxes0[1] > 180:
+            min_maxes1 = [min([m[1] for m in min_maxes if m[1] < 0]), max([m[3] for m in min_maxes if m[3] < 0])]
+            min_maxes2 = [min([m[1] for m in min_maxes if m[1] > 0]), max([m[3] for m in min_maxes if m[3] > 0])]
+            width = (360.0 + min_maxes1[1] - min_maxes2[0])
+            center_lon = (360.0 + min_maxes1[1] + min_maxes2[0]) / 2.0
+            min_maxes3 = [min_maxes0[0], min_maxes2[0], min_maxes0[2], min_maxes1[1]]
+            if center_lon > 180.0:
+                center_lon -= 360.0
+            bbox = {
+                "bbox": min_maxes3,
+                "width": width,
+                "height": (min_maxes0[2] - min_maxes0[0]),
+                "center_lat": (min_maxes0[0] + min_maxes0[2]) / 2.0,
+                "center_lon": center_lon,
+            }
+        else:
+            bbox = {
+                "bbox": min_maxes0,
+                "width": (min_maxes0[3] - min_maxes0[1]),
+                "height": (min_maxes0[2] - min_maxes0[0]),
+                "center_lat": (min_maxes0[0] + min_maxes0[2]) / 2.0,
+                "center_lon": (min_maxes0[1] + min_maxes0[3]) / 2.0,
+            }
+
+        bbox["n"] = len(lat_lon_geom)
+
+        return bbox

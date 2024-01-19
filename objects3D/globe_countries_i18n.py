@@ -66,15 +66,20 @@ class globe_countries_i18n(video_3D_base):
         glLight(GL_LIGHT0, GL_POSITION, (0, 0, self.sphere_d * -5, 0))
         glEnable(GL_DEPTH_TEST)
 
-        glRotatef(90, 1, 0, 0)
-        glRotatef(-90, 0, 0, 1)
-        glRotatef(45, 0, 0, 1)
+        self.do_initial_rotation()
+        #glRotatef(90, 1, 0, 0)
+        #glRotatef(-180, 0, 0, 1)
         glScaled(3, 3, 3)
 
         glEnable(GL_LIGHTING)
         glEnable(GL_LIGHT0)
         glEnable(GL_COLOR_MATERIAL)
         glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+
+    def do_initial_rotation(self):
+        glRotatef(90, 1, 0, 0)
+        glRotatef(-90, 0, 0, 1)
+        glRotatef(45, 0, 0, 1)
 
     def create_globe_texture(self, zoom):
         self.get_globe_texture_image(zoom)
@@ -362,7 +367,7 @@ class globe_countries_i18n(video_3D_base):
             #    if event.button == 5:  # wheel rolled down
             #        glScaled(0.95, 0.95, 0.95)
 
-        glRotatef(el[0], el[1], el[2], el[3])
+        self.do_rotation(el, frame)
 
         # Creates Sphere and wraps texture
         glEnable(GL_DEPTH_TEST)
@@ -383,6 +388,9 @@ class globe_countries_i18n(video_3D_base):
         # self.clock.tick(60)
         glReadPixels(0, 0, self.width, self.height, GL_BGR, GL_UNSIGNED_BYTE, array=frame)
         pass
+
+    def do_rotation(self, el, frame):
+        glRotatef(el[0], el[1], el[2], el[3])
 
     def read_texture(self, filename, flip_x=False, flip_y=False):
 
