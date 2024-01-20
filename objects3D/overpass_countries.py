@@ -557,7 +557,7 @@ class overpass_countries(overpass_base):
         # Fill null values with '-'
         gdf_provinces['name'] = gdf_provinces['name'].fillna('-')
         selected_provinces_France = gdf_provinces[
-            (gdf_provinces['admin'] == 'France') &
+            (gdf_provinces['admin'] == 'France й') &
             (gdf_provinces['region'].isin(['Guyane française']))]
 
         europe = pd.concat([europe_countries, selected_provinces_France])

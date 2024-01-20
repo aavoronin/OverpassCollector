@@ -1073,13 +1073,13 @@ class video_3D_test9(video_3D_base):
         gluQuadricTexture(qobj, GL_TRUE)
         glEnable(GL_TEXTURE_2D)
         glBindTexture(GL_TEXTURE_2D, self.texture)
-        gluSphere(qobj, 1, self.sphere_d, self.sphere_d)
+        gluSphere(qobj, 1, self.sphere_d // 4, self.sphere_d // 4)
         gluDeleteQuadric(qobj)
         glDisable(GL_TEXTURE_2D)
 
         # Displays pygame window
         pygame.display.flip()
-        pygame.time.wait(10)
+        pygame.time.wait(1)
 
         # self.clock.tick(60)
         glReadPixels(0, 0, self.width, self.height, GL_BGR, GL_UNSIGNED_BYTE, array=frame)

@@ -1,7 +1,10 @@
-from OpenGL.raw.GL.VERSION.GL_1_0 import glRotatef
+from OpenGL.raw.GL.VERSION.GL_1_0 import glRotatef, glTranslatef
+
+from map_objects.map_object import mo_all_world, mo_global_land, mo_continent, mo_country
 from objects3D.globe_continents import globe_continents
 import math
 from geographiclib.geodesic import Geodesic
+from math import radians, sin, cos, sqrt, atan2
 
 class globe_continents2(globe_continents):
     def __init__(self):
@@ -62,11 +65,15 @@ class globe_continents2(globe_continents):
         self.large_labels_base_size = self.im.height // 64
         self.select_objects_to_load()
 
+        self.select_objects_to_draw()
+
         self.ovp.get_global_land_polygons(self.ovp)
         self.ovp.get_continents_borders(self.ovp)
         self.ovp.get_country_borders()
         self.ovp.get_continent_labels(self.large_labels_base_size)
         self.ovp.get_ocean_labels(self.large_labels_base_size)
+
+
 
         self.fill_all_world()
         self.draw_land_polygons()
@@ -84,6 +91,17 @@ class globe_continents2(globe_continents):
         glRotatef(+self.current_lat * math.cos(math.radians(-self.current_lon)), 1, 0, 0)
         glRotatef(+self.current_lat * math.sin(math.radians(-self.current_lon)), 0, 1, 0)
         glRotatef(-self.current_lon, 0, 0, 1)
+
+        glRotatef(-self.initial_angle_z, 0, 0, 1)
+        glRotatef(-self.initial_angle_x, 1, 0, 0)
+
+        glTranslatef(0, 0, self.current_translate_z)
+        self.current_translate_z = 9 * el[2]
+        glTranslatef(0, 0, -self.current_translate_z)
+
+        glRotatef(self.initial_angle_x, 1, 0, 0)
+        glRotatef(self.initial_angle_z, 0, 0, 1)
+
         self.current_lat = el[0]
         self.current_lon = el[1]
         glRotatef(+self.current_lon, 0, 0, 1)
@@ -97,6 +115,9 @@ class globe_continents2(globe_continents):
         glRotatef(self.initial_angle_x, 1, 0, 0)
         glRotatef(self.initial_angle_z, 0, 0, 1)
 
+    def do_initial_offset(self):
+        self.current_translate_z = 1 * 9.0
+        glTranslatef(0, 0, -self.current_translate_z)
 
     def get_data_array(self):
         #for bb_data in self.ovp.countries_bboxes:
@@ -106,20 +127,24 @@ class globe_continents2(globe_continents):
         self.current_lon = 0.0
         lat, lon = 0.0, 0.0
         a = []
-        rotate_frames = 250
-        for continent in ["Asia", "Africa", "South America", "North America", "Europe", "Oceania", "Antarctica"]:
+        rotate_frames = 125
+        start_distance = 1.0
+        d0 = 1.0
+        for continent in ["Asia", "Antarctica", "Africa", "South America", "North America", "Europe", "Oceania"]:
             bbox = self.ovp.global_continent_bboxes[continent]
             new_lat, new_lon = bbox["center_lat"], bbox["center_lon"]
             path = self.generate_path(lat, lon, new_lat, new_lon, rotate_frames)
-            for r in path:
-                a.append(r)
-                print(f'({r[0]:.3f},{r[1]:.3f})')
+            d2 = self.get_distance_for_bbox(bbox['bbox'])
+            r1 = (0, 0, 1.0)
+            for i, r in enumerate(path):
+                d = (d2 * i + d0 * (rotate_frames - i)) / rotate_frames
+                r1 = (r[0], r[1], d)
+                a.append(r1)
+                #print(f'({r[0]:.3f},{r[1]:.3f})')
             for _ in range(len(path) // 3):
-                a.append(path[-1])
+                a.append(r1)
             lat, lon = new_lat, new_lon
-
-        print(1)
-
+            d0 = d2
         return a
 
     def generate_path(self, lat0, lon0, new_lat, new_lon, n):
@@ -155,4 +180,33 @@ class globe_continents2(globe_continents):
         path.append((new_lat, new_lon))
 
         return path
+
+    def get_distance_for_bbox(self, bbox):
+        c = self.calculate_longest_diagonal(bbox)
+        if c > 1.0:
+            return 1.0
+        return 7.0 / 9.0 + c * 2.0 / 9.0
+
+    def calculate_longest_diagonal(self, bbox):
+        min_lat, min_lon, max_lat, max_lon = map(radians, bbox)
+
+        # Convert from degrees to radians
+        dlon = max_lon - min_lon
+        dlat = max_lat - min_lat
+
+        # Haversine formula
+        a = sin(dlat / 2)**2 + cos(max_lat) * cos(min_lat) * sin(dlon / 2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return c
+
+    def select_objects_to_draw(self):
+        self.objects_to_draw = []
+
+        self.objects_to_draw.append(mo_all_world())
+        self.objects_to_draw.append(mo_global_land())
+        for continent in ["Asia", "Antarctica", "Africa", "South America", "North America", "Europe", "Oceania"]:
+            self.objects_to_draw.append(mo_continent(continent))
+        for country in ["Russia", "Egypt", "Andorra", "Australia"]:
+            self.objects_to_draw.append(mo_country(country))
 

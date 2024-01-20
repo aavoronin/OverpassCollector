@@ -62,7 +62,7 @@ class globe_countries_i18n(video_3D_base):
         gluPerspective(45, (display[0] / display[1]), 0.1, 50.0)
 
         glMatrixMode(GL_MODELVIEW)
-        glTranslatef(0, 0, -9)
+        self.do_initial_offset()
         glLight(GL_LIGHT0, GL_POSITION, (0, 0, self.sphere_d * -5, 0))
         glEnable(GL_DEPTH_TEST)
 
@@ -75,6 +75,9 @@ class globe_countries_i18n(video_3D_base):
         glEnable(GL_LIGHT0)
         glEnable(GL_COLOR_MATERIAL)
         glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+
+    def do_initial_offset(self):
+        glTranslatef(0, 0, -9)
 
     def do_initial_rotation(self):
         glRotatef(90, 1, 0, 0)
@@ -377,13 +380,13 @@ class globe_countries_i18n(video_3D_base):
         gluQuadricTexture(qobj, GL_TRUE)
         glEnable(GL_TEXTURE_2D)
         glBindTexture(GL_TEXTURE_2D, self.texture)
-        gluSphere(qobj, 1, self.sphere_d, self.sphere_d)
+        gluSphere(qobj, 1, self.sphere_d // 4, self.sphere_d // 4)
         gluDeleteQuadric(qobj)
         glDisable(GL_TEXTURE_2D)
 
         # Displays pygame window
         pygame.display.flip()
-        pygame.time.wait(10)
+        pygame.time.wait(1)
 
         # self.clock.tick(60)
         glReadPixels(0, 0, self.width, self.height, GL_BGR, GL_UNSIGNED_BYTE, array=frame)
