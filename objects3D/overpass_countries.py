@@ -600,7 +600,29 @@ class overpass_countries(overpass_base):
         antarctica['lon'] += 50.0
         for info in self.continent_info:
             if abs(info["lat"]) < 60 and len(info["name"]) > 10:
-                info["name"] = info["name"].replace(' ', '\n')
+                info["name"] = self.make_multiline(info)
+            info["lines"] = 2 if '\n' in info["name"] else 1
+
+
+    def make_multiline(self, info):
+        return self.split_string(info["name"])
+
+    def split_string(self, s):
+        # Find the median point of the string
+        mid = len(s) // 2
+
+        # Find all occurrences of whitespace in the string
+        whitespaces = [i for i, char in enumerate(s) if char == ' ']
+
+        # If no whitespace exists, return the string as is
+        if not whitespaces:
+            return s
+
+        # Determine the whitespace which is closest to the median point
+        closest_whitespace = min(whitespaces, key=lambda ws: abs(ws - mid))
+
+        # Split the string at that whitespace
+        return f'{s[:closest_whitespace]}\n{s[closest_whitespace + 1:]}'
 
     def get_ocean_labels(self, label_size):
         query = '''[out:json];node["place"="ocean"];out;'''
@@ -608,12 +630,13 @@ class overpass_countries(overpass_base):
         self.get_labels_info(data, self.ocean_info, self.lang)
         self.ocean_info = [{**info, "size": label_size} for info in self.ocean_info]
         arctic = next(filter(lambda o: o["name_en"].startswith("Arctic"), self.ocean_info), None)
-        arctic['lat'] = 175.0
+        arctic['lat'] = 75.0
         pacific = next(filter(lambda o: o["name_en"].startswith("Pacific"), self.ocean_info), None)
         pacific['size'] *= 2.5
         for info in self.ocean_info:
             if abs(info["lat"]) < 60 and len(info["name"]) > 10:
-                info["name"] = info["name"].replace(' ', '\n')
+                info["name"] = self.make_multiline(info)
+            info["lines"] = 2 if '\n' in info["name"] else 1
 
     def get_labels_info(self, data, info, lang):
         name_tag_lang = f'name:{lang}'

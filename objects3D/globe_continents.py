@@ -114,7 +114,8 @@ class globe_continents(globe_countries_i18n):
         lat = cont_i["lat"]
         lon = cont_i["lon"]
         s = cont_i["name"]
-        font_h = cont_i["size"]
+        font_h = cont_i["size"] * cont_i["lines"]
+        #lines = cont_i["lines"]
 
         inner_polygons, outer_polygons, outer_polygons_for_text = self.get_text_polygons(font2, s)
 
