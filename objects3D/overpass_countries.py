@@ -592,9 +592,12 @@ class overpass_countries(overpass_base):
         n_america['lat'] -= 10.0
         s_america = next(filter(lambda o: o["name_en"].startswith("South"), self.continent_info), None)
         s_america['lat'] += 15.0
-        s_america['lon'] += 10.0
+        s_america['lon'] += 5.0
         antarctica = next(filter(lambda o: o["name_en"].startswith("Antarctica"), self.continent_info), None)
         antarctica['lon'] += 50.0
+        for info in self.continent_info:
+            if abs(info["lat"]) < 60 and len(info["name"]) > 10:
+                info["name"] = info["name"].replace(' ', '\n')
 
     def get_ocean_labels(self, label_size):
         query = '''[out:json];node["place"="ocean"];out;'''
@@ -602,9 +605,12 @@ class overpass_countries(overpass_base):
         self.get_labels_info(data, self.ocean_info, self.lang)
         self.ocean_info = [{**info, "size": label_size} for info in self.ocean_info]
         arctic = next(filter(lambda o: o["name_en"].startswith("Arctic"), self.ocean_info), None)
-        arctic['lat'] = 75.0
+        arctic['lat'] = 175.0
         pacific = next(filter(lambda o: o["name_en"].startswith("Pacific"), self.ocean_info), None)
         pacific['size'] *= 2.5
+        for info in self.ocean_info:
+            if abs(info["lat"]) < 60 and len(info["name"]) > 10:
+                info["name"] = info["name"].replace(' ', '\n')
 
     def get_labels_info(self, data, info, lang):
         name_tag_lang = f'name:{lang}'

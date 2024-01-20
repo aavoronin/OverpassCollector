@@ -177,16 +177,13 @@ class globe_continents(globe_countries_i18n):
         return globe_text_inner_polygons, globe_text_outer_polygon
 
     def get_text_polygons(self, font2, s):
-        # n = 2 ** self.zoom
-        # bbox = self.draw.multiline_textbbox((0.0, 0.0), s, font=font, spacing=0, language=lang)
-        bbox2 = self.draw.multiline_textbbox((0.0, 0.0), s, font=font2, spacing=0, language=self.lang)
-        # ww, hh = int(bbox[2] - bbox[0] + 1), int(bbox[3] - bbox[1] + 1)
+        bbox2 = self.draw.multiline_textbbox((0.0, 0.0), s, font=font2, spacing=0, align='center', language=self.lang)
         factor = 2
         w2, h2 = factor * int(bbox2[2] - bbox2[0] + 1), factor * int(bbox2[3] - bbox2[1] + 1)
         img_ar = np.zeros((h2, w2), dtype=np.uint8)
         text_box_img = Image.fromarray(img_ar, 'L')
         text_box_img_draw = ImageDraw.Draw(text_box_img)
-        text_box_img_draw.multiline_text((0.0, 0.0), s, font=font2, fill=255, spacing=0, language=self.lang)
+        text_box_img_draw.multiline_text((0.0, 0.0), s, font=font2, fill=255, spacing=0, align='center', language=self.lang)
         img_ar = np.array(text_box_img)
         # Convert the image to binary.
         binary_img = img_ar > 128

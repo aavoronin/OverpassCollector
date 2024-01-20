@@ -9,7 +9,7 @@ class globe_continents2(globe_continents):
         self.factor = 1.0
         self.lang = "ru"
         self.speed = 1.8
-        self.zoom = 4
+        self.zoom = 5
 
     def convert_polygons_from_lat_lon(self, polygons_lat_lon):
         #return [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly] for poly in polygons_lat_lon]
