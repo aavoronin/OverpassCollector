@@ -111,7 +111,7 @@ class globe_countries_i18n(video_3D_base):
         for country_code, country_name in self.ovp.countries_code_name:
             print(f'{country_code} {country_name}')
         #ovp.load_countries_polygons_level4()
-        self.ovp.get_global_land_polygons(zoom)
+        self.ovp.get_global_land_polygons()
 
         self.fill_all_world()
         self.draw_land_polygons()
@@ -461,6 +461,8 @@ class globe_countries_i18n(video_3D_base):
         #return self.im
 
     def draw_polygon_on_image_core(self, fill_info, xys):
+        if len(xys) < 1:
+            return
         if fill_info.border_color is None:  # filled polygon without border
             self.draw.polygon(xy=xys, fill=fill_info.fill_color)
         elif fill_info.fill_color is not None:  # filled polygon with border

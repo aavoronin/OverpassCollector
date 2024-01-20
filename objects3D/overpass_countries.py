@@ -48,6 +48,7 @@ class overpass_countries(overpass_base):
         self.continent_info = []
         self.ocean_info = []
         self.countries_info = []
+        self.global_continent_polygons_xy = None
 
     def load(self):
         self.get_list_of_countries()
@@ -405,7 +406,7 @@ class overpass_countries(overpass_base):
         print(f'{len(countries)} countries')
 
 
-    def get_global_land_polygons(self, ovp):
+    def get_global_land_polygons(self):
         folder = "c:/Data/natural_earth/ne_10m_land/"
         url = ''
         file = "ne_10m_land.shp"
@@ -414,14 +415,14 @@ class overpass_countries(overpass_base):
         cache_name = f"lang ne-10m"
         md5 = hashlib.md5(cache_name.encode('utf-8')).hexdigest()
         fname = f"{self.cache_path}\\{str(md5)}.zlib"
-        self.global_continent_polygons_xy = self.try_load_from_cache(fname)
-        if self.global_continent_polygons_xy is None:
+        self.global_land_polygons_xy = self.try_load_from_cache(fname)
+        if self.global_land_polygons_xy is None:
             gdf = gpd.read_file(os.path.join(folder, file))
             geometry = gdf
             self.global_land_polygons_xy = land_polygons = {}
             self.collect_polygons(geometry, land_polygons)
             #[self.deg2xy(point[1], point[0], zoom) for point in polygon.exterior.coords]
-            self.save_to_cache(fname, self.global_continent_polygons_xy)
+            self.save_to_cache(fname, self.global_land_polygons_xy)
 
         end_time = time.time()
         print(f'land polygons ({end_time-start_time})')
@@ -454,7 +455,7 @@ class overpass_countries(overpass_base):
         end_time = time.time()
         print(f'country polygons ({end_time-start_time})')
 
-    def get_continents_borders(self, ovp):
+    def get_continents_borders(self):
         start_time = time.time()
         cache_name = f"continents_borders ne-10m"
         fname = self.get_cache_file_name(cache_name)
@@ -557,16 +558,14 @@ class overpass_countries(overpass_base):
         # Fill null values with '-'
         gdf_provinces['name'] = gdf_provinces['name'].fillna('-')
         selected_provinces_France = gdf_provinces[
-            (gdf_provinces['admin'] == 'France й') &
+            (gdf_provinces['admin'] == 'France') &
             (gdf_provinces['region'].isin(['Guyane française']))]
 
         europe = pd.concat([europe_countries, selected_provinces_France])
         return europe
 
     def get_africa_geom(self, gdf_countries, gdf_provinces):
-        # Step 1: Filter all countries which are marked as 'CONTINENT' == 'Asia'
         africa_countries = gdf_countries[gdf_countries['CONTINENT'] == 'Africa']
-        # Step 2: Exclude Russia, France, and Turkey
         excluded_countries = ['Egypt']
         africa_countries = africa_countries[~africa_countries['NAME'].isin(excluded_countries)]
         # Fill null values with '-'
@@ -597,7 +596,7 @@ class overpass_countries(overpass_base):
         s_america['lat'] += 15.0
         s_america['lon'] += 5.0
         antarctica = next(filter(lambda o: o["name_en"].startswith("Antarctica"), self.continent_info), None)
-        antarctica['lon'] += 50.0
+        antarctica['lon'] = 0.0
         for info in self.continent_info:
             if abs(info["lat"]) < 60 and len(info["name"]) > 10:
                 info["name"] = self.make_multiline(info)

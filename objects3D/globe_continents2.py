@@ -12,7 +12,7 @@ class globe_continents2(globe_continents):
         self.factor = 1.0
         self.lang = "ru"
         self.speed = 1.8
-        self.zoom = 5
+        self.zoom = 4
 
     def convert_polygons_from_lat_lon(self, polygons_lat_lon):
         #return [[self.ovp.deg2xy(point[0], point[1], self.zoom) for point in poly] for poly in polygons_lat_lon]
@@ -66,18 +66,19 @@ class globe_continents2(globe_continents):
         self.select_objects_to_load()
 
         self.select_objects_to_draw()
+        self.load_selected_mo_objects()
 
-        self.ovp.get_global_land_polygons(self.ovp)
-        self.ovp.get_continents_borders(self.ovp)
-        self.ovp.get_country_borders()
+        #self.ovp.get_global_land_polygons()
+        #self.ovp.get_continents_borders()
+        #self.ovp.get_country_borders()
         self.ovp.get_continent_labels(self.large_labels_base_size)
         self.ovp.get_ocean_labels(self.large_labels_base_size)
 
 
-
-        self.fill_all_world()
-        self.draw_land_polygons()
-        self.draw_continent_polygons()
+        self.draw_selected_mo_objects()
+        #self.fill_all_world()
+        #self.draw_land_polygons()
+        #self.draw_continent_polygons()
         self.draw_continent_labels()
         self.draw_ocean_labels()
 
@@ -127,7 +128,7 @@ class globe_continents2(globe_continents):
         self.current_lon = 0.0
         lat, lon = 0.0, 0.0
         a = []
-        rotate_frames = 125
+        rotate_frames = 50
         start_distance = 1.0
         d0 = 1.0
         for continent in ["Asia", "Antarctica", "Africa", "South America", "North America", "Europe", "Oceania"]:
@@ -202,11 +203,20 @@ class globe_continents2(globe_continents):
 
     def select_objects_to_draw(self):
         self.objects_to_draw = []
-
         self.objects_to_draw.append(mo_all_world())
         self.objects_to_draw.append(mo_global_land())
         for continent in ["Asia", "Antarctica", "Africa", "South America", "North America", "Europe", "Oceania"]:
             self.objects_to_draw.append(mo_continent(continent))
-        for country in ["Russia", "Egypt", "Andorra", "Australia"]:
-            self.objects_to_draw.append(mo_country(country))
+        #for country in ["Russia", "Egypt", "Andorra", "Australia"]:
+        #    self.objects_to_draw.append(mo_country(country))
+
+    def load_selected_mo_objects(self):
+        for mo in self.objects_to_draw:
+            mo.load_geometry(self.ovp)
+            mo.init_fill_info()
+
+    def draw_selected_mo_objects(self):
+        for mo in self.objects_to_draw:
+            mo.draw_on_globe_texture(self.ovp, self.draw)
+
 

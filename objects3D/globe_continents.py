@@ -20,8 +20,8 @@ class globe_continents(globe_countries_i18n):
         self.ovp.load()
         self.select_objects_to_load()
 
-        self.ovp.get_global_land_polygons(self.ovp)
-        self.ovp.get_continents_borders(self.ovp)
+        self.ovp.get_global_land_polygons()
+        self.ovp.get_continents_borders()
         self.ovp.get_country_borders()
         self.ovp.get_continent_labels(self.large_labels_base_size)
         self.ovp.get_ocean_labels(self.large_labels_base_size)
@@ -72,13 +72,13 @@ class globe_continents(globe_countries_i18n):
 
     def draw_labels_core(self, color, font, font2, h, label_info, n, w):
 
-        im_mask = np.full_like(self.im, 255)
-        im_mask_img = Image.fromarray(im_mask)
-        im_mask_img_draw = ImageDraw.Draw(im_mask_img)
+        self.im_mask = np.full_like(self.im, 255)
+        self.im_mask_img = Image.fromarray(self.im_mask)
+        self.im_mask_img_draw = ImageDraw.Draw(self.im_mask_img)
 
-        im_stamp = np.zeros_like(self.im)
-        im_stamp_img = Image.fromarray(im_stamp)
-        im_stamp_img_draw = ImageDraw.Draw(im_stamp_img)
+        self.im_stamp = np.zeros_like(self.im)
+        self.im_stamp_img = Image.fromarray(self.im_stamp)
+        self.im_stamp_img_draw = ImageDraw.Draw(self.im_stamp_img)
 
         fi_letter_color = polygon_fill_info(fill_color=color, border_color=None)
         fi_black = polygon_fill_info(fill_color=(0,0,0), border_color=None)
@@ -87,18 +87,18 @@ class globe_continents(globe_countries_i18n):
         for cont_i in label_info:
             # self.draw_label(color, cont_i, font, h, lang, n, w)
             self.draw_label_polygons(cont_i, font2, w, h, n,
-                                     im_mask_img_draw, im_stamp_img_draw, fi_letter_color, fi_black, fi_white)
+                                     fi_letter_color, fi_black, fi_white)
 
-        #im_mask_img_draw._image.save("mask.png")
+        #self.im_mask_img_draw._image.save("mask.png")
         #im_stamp_img_draw._image.save("stamp.png")
 
         self.draw = ImageDraw.Draw(
             Image.fromarray(np.array(self.draw._image) &
-                            np.array(im_mask_img_draw._image) |
-                            np.array(im_stamp_img_draw._image)))
+                            np.array(self.im_mask_img_draw._image) |
+                            np.array(self.im_stamp_img_draw._image)))
 
         #self.draw._image.save("masked.png")
-        self.apply_masked_drawing(im_mask, im_stamp)
+        self.apply_masked_drawing(self.im_mask, self.im_stamp)
 
     def convert_text_polygon_point(self, p, bc, font_h, bh, lat, xy2):
         return (
@@ -107,7 +107,7 @@ class globe_continents(globe_countries_i18n):
         )
 
     def draw_label_polygons(self, cont_i, font2, w, h, n,
-                            im_mask_img_draw, im_stamp_img_draw, fi_letter_color, fi_black, fi_white):
+                            fi_letter_color, fi_black, fi_white):
         #xy0 = self.ovp.deg2xy(cont_i['lat'], cont_i['lon'], self.zoom)
         xy0 = self.convert_polygons_from_lat_lon([[[cont_i['lat'], cont_i['lon']]]])[0][0]
 
@@ -127,29 +127,29 @@ class globe_continents(globe_countries_i18n):
             max_x = max([p[0] for p in poly])
             if min_x < w and max_x >= 0:
                 #self.draw_polygon_on_image_core(fi, poly)
-                self.draw_polygon_on_2images_core([im_mask_img_draw, im_stamp_img_draw], [fi_black, fi_letter_color], poly)
+                self.draw_polygon_on_2images_core([self.im_mask_img_draw, self.im_stamp_img_draw], [fi_black, fi_letter_color], poly)
             if min_x < 0:
                 poly1 = [(p[0] + w, p[1]) for p in poly]
                 #self.draw_polygon_on_image_core(fi, poly1)
-                self.draw_polygon_on_2images_core([im_mask_img_draw, im_stamp_img_draw], [fi_black, fi_letter_color], poly1)
+                self.draw_polygon_on_2images_core([self.im_mask_img_draw, self.im_stamp_img_draw], [fi_black, fi_letter_color], poly1)
             if max_x >= w:
                 poly2 = [(p[0] - w, p[1]) for p in poly]
                 #self.draw_polygon_on_image_core(fi, poly2)
-                self.draw_polygon_on_2images_core([im_mask_img_draw, im_stamp_img_draw], [fi_black, fi_letter_color], poly2)
+                self.draw_polygon_on_2images_core([self.im_mask_img_draw, self.im_stamp_img_draw], [fi_black, fi_letter_color], poly2)
 
         for poly in globe_text_inner_polygons:
             min_x = min([p[0] for p in poly])
             max_x = max([p[0] for p in poly])
             if min_x < w and max_x >= 0:
                 #self.draw_polygon_on_image_core(fi, poly)
-                self.draw_polygon_on_2images_core([im_mask_img_draw, im_stamp_img_draw], [fi_white, fi_black], poly)
+                self.draw_polygon_on_2images_core([self.im_mask_img_draw, self.im_stamp_img_draw], [fi_white, fi_black], poly)
             if min_x < 0:
                 poly1 = [(p[0] + w, p[1]) for p in poly]
-                self.draw_polygon_on_2images_core([im_mask_img_draw, im_stamp_img_draw], [fi_white, fi_black], poly1)
+                self.draw_polygon_on_2images_core([self.im_mask_img_draw, self.im_stamp_img_draw], [fi_white, fi_black], poly1)
             if max_x >= w:
                 poly2 = [(p[0] - w, p[1]) for p in poly]
                 #self.draw_polygon_on_image_core(fi, poly2)
-                self.draw_polygon_on_2images_core([im_mask_img_draw, im_stamp_img_draw], [fi_white, fi_black], poly2)
+                self.draw_polygon_on_2images_core([self.im_mask_img_draw, self.im_stamp_img_draw], [fi_white, fi_black], poly2)
 
     def convert_text_polygons(self, font_h, w, h, outer_polygons_for_text, outer_polygons, inner_polygons, lat, lon, n, xy0):
         # Get the minimum rotated rectangle that encloses the merged polygon
