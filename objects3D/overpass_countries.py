@@ -4,6 +4,8 @@ import pickle
 import time
 import json
 
+from shapely import Polygon, Point
+
 from data.languages import languages
 from objects3D.country_osm_data import country_info
 from objects3D.map_box_info import map_box_info
@@ -13,6 +15,7 @@ import requests
 import os
 import pandas as pd
 import geopandas as gpd
+from scipy.spatial import distance
 
 from objects3D.polygon_fill_info import polygon_fill_info
 
@@ -629,9 +632,50 @@ class overpass_countries(overpass_base):
 
     def get_lat_lon_bbox(self, lat_lon_geom):
         d = 0.0001
+
+        portion_to_reduce = 0.2
+        # Assume polygons is a list of polygons, where each polygon is a list of tuples (x, y)
+        total_area = 0
+        total_mass = 0
+        total_x = 0
+        total_y = 0
+
+        polygons2 = lat_lon_geom.copy()
+        polygons = []
+        for polygon in polygons2:
+            # Create a Polygon object
+            poly = Polygon(polygon)
+
+            # Calculate area
+            area = poly.area
+            total_area += area
+            total_mass += area
+
+            # Calculate center of mass (centroid)
+            centroid = poly.centroid
+            total_x += area * centroid.x
+            total_y += area * centroid.y
+            polygons.append(poly)
+
+        # Calculate final center of mass
+        final_x = total_x / total_mass
+        final_y = total_y / total_mass
+        final_centroid = (final_x, final_y)
+
+        polygons1 = [poly for poly in polygons if poly.area > 0.01 * total_area]
+
+        # Sort polygons by distance from final centroid
+        sorted_polygons = sorted(polygons1, key=lambda polygon: distance.euclidean(
+            final_centroid, (polygon.centroid.x, polygon.centroid.y)))
+
+        # Exclude most distant polygons until total area is reduced not less than 20%
+        while len(sorted_polygons) > 1 and total_area * (1.0 - portion_to_reduce) < sum(poly.area for poly in sorted_polygons):
+            sorted_polygons.pop()
+        #lat_lon_geom
+        poly = sorted_polygons[0]
         min_maxes = [
-            (min([p[0] for p in poly]), min([p[1] for p in poly]), max([p[0] for p in poly]), max([p[1] for p in poly]))
-            for poly in lat_lon_geom
+            #(min([p[0] for p in poly]), min([p[1] for p in poly]), max([p[0] for p in poly]), max([p[1] for p in poly]))
+            poly.bounds for poly in sorted_polygons
         ]
         min_maxes0 = [min([m[0] for m in min_maxes]), min([m[1] for m in min_maxes]),
                       max([m[2] for m in min_maxes]), max([m[3] for m in min_maxes])]
@@ -646,8 +690,8 @@ class overpass_countries(overpass_base):
         #    }
         #el
         if min_maxes0[3] - min_maxes0[1] > 180:
-            min_maxes1 = [min([m[1] for m in min_maxes if m[1] < 0]), max([m[3] for m in min_maxes if m[3] < 0])]
-            min_maxes2 = [min([m[1] for m in min_maxes if m[1] > 0]), max([m[3] for m in min_maxes if m[3] > 0])]
+            min_maxes1 = [min([m[1] for m in min_maxes if m[1] < 0] + [0]), max([m[3] for m in min_maxes if m[3] < 0] + [0])]
+            min_maxes2 = [min([m[1] for m in min_maxes if m[1] > 0] + [0]), max([m[3] for m in min_maxes if m[3] > 0] + [0])]
             width = (360.0 + min_maxes1[1] - min_maxes2[0])
             center_lon = (360.0 + min_maxes1[1] + min_maxes2[0]) / 2.0
             min_maxes3 = [min_maxes0[0], min_maxes2[0], min_maxes0[2], min_maxes1[1]]
