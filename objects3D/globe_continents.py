@@ -54,7 +54,7 @@ class globe_continents(globe_countries_i18n):
         h = self.im.height
 
         label_info = self.ovp.continent_info
-        self.draw_labels_core(color, font, font2, h, label_info, n, w)
+        self.draw_labels_core(color, font2, h, label_info, n, w)
 
     def draw_ocean_labels(self):
         color = (0, 0, 192)
@@ -68,10 +68,9 @@ class globe_continents(globe_countries_i18n):
         h = self.im.height
         label_info = self.ovp.ocean_info
 
-        self.draw_labels_core(color, font, font2, h, label_info, n, w)
+        self.draw_labels_core(color, font2, h, label_info, n, w)
 
-    def draw_labels_core(self, color, font, font2, h, label_info, n, w):
-
+    def init_masks(self):
         self.im_mask = np.full_like(self.im, 255)
         self.im_mask_img = Image.fromarray(self.im_mask)
         self.im_mask_img_draw = ImageDraw.Draw(self.im_mask_img)
@@ -79,6 +78,17 @@ class globe_continents(globe_countries_i18n):
         self.im_stamp = np.zeros_like(self.im)
         self.im_stamp_img = Image.fromarray(self.im_stamp)
         self.im_stamp_img_draw = ImageDraw.Draw(self.im_stamp_img)
+
+    def draw_labels_core(self, color, font2, h, label_info, n, w):
+
+        #self.im_mask = np.full_like(self.im, 255)
+        #self.im_mask_img = Image.fromarray(self.im_mask)
+        #self.im_mask_img_draw = ImageDraw.Draw(self.im_mask_img)
+
+        #self.im_stamp = np.zeros_like(self.im)
+        #self.im_stamp_img = Image.fromarray(self.im_stamp)
+        #self.im_stamp_img_draw = ImageDraw.Draw(self.im_stamp_img)
+        self.init_masks()
 
         fi_letter_color = polygon_fill_info(fill_color=color, border_color=None)
         fi_black = polygon_fill_info(fill_color=(0,0,0), border_color=None)
@@ -92,13 +102,20 @@ class globe_continents(globe_countries_i18n):
         #self.im_mask_img_draw._image.save("mask.png")
         #im_stamp_img_draw._image.save("stamp.png")
 
+        self.apply_masks()
+        #self.draw = ImageDraw.Draw(
+        #    Image.fromarray(np.array(self.draw._image) &
+        #                    np.array(self.im_mask_img_draw._image) |
+        #                    np.array(self.im_stamp_img_draw._image)))
+
+        #self.draw._image.save("masked.png")
+        #self.apply_masked_drawing(self.im_mask, self.im_stamp)
+
+    def apply_masks(self):
         self.draw = ImageDraw.Draw(
             Image.fromarray(np.array(self.draw._image) &
                             np.array(self.im_mask_img_draw._image) |
                             np.array(self.im_stamp_img_draw._image)))
-
-        #self.draw._image.save("masked.png")
-        self.apply_masked_drawing(self.im_mask, self.im_stamp)
 
     def convert_text_polygon_point(self, p, bc, font_h, bh, lat, xy2):
         return (

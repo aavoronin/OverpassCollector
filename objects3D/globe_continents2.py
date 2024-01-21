@@ -1,6 +1,6 @@
 from OpenGL.raw.GL.VERSION.GL_1_0 import glRotatef, glTranslatef
 
-from map_objects.map_object import mo_all_world, mo_global_land, mo_continent, mo_country
+from map_objects.map_object import mo_all_world, mo_global_land, mo_continent, mo_country, mo_ocean
 from objects3D.globe_continents import globe_continents
 import math
 from geographiclib.geodesic import Geodesic
@@ -71,7 +71,7 @@ class globe_continents2(globe_continents):
         #self.ovp.get_global_land_polygons()
         #self.ovp.get_continents_borders()
         #self.ovp.get_country_borders()
-        self.ovp.get_continent_labels(self.large_labels_base_size)
+        #self.ovp.get_continent_labels(self.large_labels_base_size)
         self.ovp.get_ocean_labels(self.large_labels_base_size)
 
 
@@ -79,8 +79,8 @@ class globe_continents2(globe_continents):
         #self.fill_all_world()
         #self.draw_land_polygons()
         #self.draw_continent_polygons()
-        self.draw_continent_labels()
-        self.draw_ocean_labels()
+        #self.draw_continent_labels()
+        #self.draw_ocean_labels()
 
         self.post_process_image()
 
@@ -207,6 +207,8 @@ class globe_continents2(globe_continents):
         self.objects_to_draw.append(mo_global_land())
         for continent in ["Asia", "Antarctica", "Africa", "South America", "North America", "Europe", "Oceania"]:
             self.objects_to_draw.append(mo_continent(continent))
+        for ocean in ["Southern Ocean", "Arctic Ocean", "Pacific Ocean", "Indian Ocean", "Atlantic Ocean",]:
+            self.objects_to_draw.append(mo_ocean(ocean))
         #for country in ["Russia", "Egypt", "Andorra", "Australia"]:
         #    self.objects_to_draw.append(mo_country(country))
 
@@ -214,9 +216,15 @@ class globe_continents2(globe_continents):
         for mo in self.objects_to_draw:
             mo.load_geometry(self.ovp)
             mo.init_fill_info()
+            mo.load_labels(self.ovp, self.large_labels_base_size)
 
     def draw_selected_mo_objects(self):
         for mo in self.objects_to_draw:
             mo.draw_on_globe_texture(self.ovp, self.draw)
+        self.init_masks()
+        for mo in self.objects_to_draw:
+            mo.draw_label_on_globe_texture(self.ovp, self.im_mask_img_draw, self.im_stamp_img_draw)
+        self.apply_masks()
+
 
 

@@ -628,6 +628,8 @@ class overpass_countries(overpass_base):
         data = self.exec_query_json(query, "out", build=False)
         self.get_labels_info(data, self.ocean_info, self.lang)
         self.ocean_info = [{**info, "size": label_size} for info in self.ocean_info]
+        for o in self.ocean_info:
+            print(f'"{o["name_en"]}",')
         arctic = next(filter(lambda o: o["name_en"].startswith("Arctic"), self.ocean_info), None)
         arctic['lat'] = 75.0
         pacific = next(filter(lambda o: o["name_en"].startswith("Pacific"), self.ocean_info), None)

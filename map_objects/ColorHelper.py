@@ -21,3 +21,15 @@ class ColorHelper:
         if continent_name_en in continent_colors:
             return continent_colors[continent_name_en]
         return (255, 255, 255)
+
+    @classmethod
+    def ocean_label_color_argb(cls):
+        return (0, 0, 192)
+
+    @classmethod
+    def continent_label_color_argb(cls):
+        return (64, 64, 64)
+
+    @classmethod
+    def unknown_color(cls):
+        return (255, 64, 64)
